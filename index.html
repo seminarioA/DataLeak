@@ -233,43 +233,28 @@
 <script>
 
 
-    async function loadDatabasesCategory() {
+    async function loadCategory(categoryName, containerId) {
 
-        const container = document.getElementById("category-databases-catalog");
-
-        const { data, error } = await supabase
-            .from("db_dataleake")
-            .select("*")
-            .contains("category", ["Databases"]);
-
-
-        for (const book of data) {
-            let pdfUrl = null;
-            const card = htmlCardComponent(COLORS[book.color], book.url_image, book.title, book.author);
-            container.insertAdjacentHTML("beforeend", card);
-        }
-    }
-
-    async function loadMachineLearningCategory() {
-
-        const container = document.getElementById("category-machine_learning-catalog");
+        const container = document.getElementById(containerId);
 
         const { data, error } = await supabase
             .from("db_dataleake")
             .select("*")
-            .contains("category", ["Machine Learning"]);
-
+            .contains("category", [categoryName]);
 
         for (const book of data) {
-            let pdfUrl = null;
-            const card = htmlCardComponent(COLORS[book.color], book.url_image, book.title, book.author);
+            const card = htmlCardComponent(
+                COLORS[book.color],
+                book.url_image,
+                book.title,
+                book.author
+            );
             container.insertAdjacentHTML("beforeend", card);
         }
     }
 
-    loadMachineLearningCategory();
-    loadDatabasesCategory();
-
+    loadCategory("Databases", "category-databases-catalog");
+    loadCategory("Machine Learning", "category-machine_learning-catalog");
 
 </script>
 
