@@ -231,8 +231,25 @@
 </script>
 
 <script>
+    async function loadAllCategories() {
+        const { data, error } = await supabase
+            .from("db_dataleake")
+            .select("category");
 
+        const categories = new Set();
 
+        for (const row of data) {
+            if (Array.isArray(row.category)) {
+                row.category.forEach(cat => categories.add(cat));
+            }
+        }
+
+        return Array.from(categories);
+    }
+
+</script>
+
+<script>
     async function loadCategory(categoryName, containerId) {
 
         const container = document.getElementById(containerId);
@@ -243,19 +260,13 @@
             .contains("category", [categoryName]);
 
         for (const book of data) {
-            const card = htmlCardComponent(
-                COLORS[book.color],
-                book.url_image,
-                book.title,
-                book.author
-            );
+            const card = htmlCardComponent(COLORS[book.color], book.url_image, book.title, book.author);
             container.insertAdjacentHTML("beforeend", card);
         }
     }
 
     loadCategory("Databases", "category-databases-catalog");
     loadCategory("Machine Learning", "category-machine_learning-catalog");
-
 </script>
 
 </html>
