@@ -6,7 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DataLeak</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    const SUPABASE_URL = "https://buykkihkvljctcahbsjq.supabase.co";
+    const PUBLIC_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1eWtraWhrdmxqY3RjYWhic2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTM2MDAsImV4cCI6MjA3ODYyOTYwMH0.laSDQ4L4q7XlS3t7UrFMAEXVMKY2yCH9CzyNiyjCKwo";
+    const supabase = supabase.createClient(SUPABASE_URL, PUBLIC_ANON_KEY);
+    </script>
 </head>
 
 <body class="bg-gray-950">
