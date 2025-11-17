@@ -10,7 +10,7 @@
 </head>
 
 <body class="bg-gray-950">
-    
+
     <h1 class="font-mono m-3 text-white text-2xl text-center">DataLeake</h1>
     <hr class="mb-2 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10 w-full" />
 
@@ -129,6 +129,15 @@
 </script>
 
 <script>
+    async function downloadBook(filePath) {
+        const { data, error } = await supabase.storage
+            .from("dataleake")
+            .createSignedUrl(filePath, 3600);
+        window.open(data.signedUrl, "_blank");
+    }
+</script>
+
+<script>
     var COLORS = {
         gray: "bg-gray",
         red: "bg-red",
@@ -139,6 +148,16 @@
         yellow: "bg-yellow",
         orange: "bg-orange",
     };
+</script>
+
+<script>
+    async function getPdfSignedUrl(filePath) {
+        const { data, error } = await supabase.storage
+            .from("dataleake")
+            .createSignedUrl(filePath, 3600);
+        console.log(error)
+        return data?.signedUrl;
+    }
 </script>
 
 <script>
@@ -156,7 +175,8 @@
                 COLORS[book.color],
                 book.url_image,
                 book.title,
-                book.author
+                book.author,
+                book.file_path,
             );
             container.insertAdjacentHTML("beforeend", card);
         }
@@ -179,7 +199,6 @@
 
         return Array.from(categories);
     }
-
 </script>
 
 <script>
