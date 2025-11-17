@@ -6,206 +6,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DataLeak</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body>
+<body class="bg-gray-950">
+    
+    <h1 class="font-mono m-3 text-white text-2xl text-center">DataLeake</h1>
+    <hr class="mb-2 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10 w-full" />
 
-    <body class="bg-gray-950">
-        <h1 class="font-mono m-3 text-white text-2xl text-center">DataLeake</h1>
 
-        <hr class="mb-2 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
+    <div class="m-5">
+        <h1 class="font-mono text-white text-2xl">Mas Descargados</h1>
+        <h3 class=" font-mono text-white text-md">(En la semana)</h3>
 
-        <div class="m-5">
-            <h1 class="font-mono text-white text-2xl">Mas Descargados</h1>
-            <h3 class=" font-mono text-white text-md">(En la semana)</h3>
-
-            <div id="library" class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
-                <a
-                    href="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/Fundamentals%20of%20data%20engineering%20_%20plan%20and%20build%20robust%20--%20Joe%20Reis%20and%20Matt%20Housley.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvRnVuZGFtZW50YWxzIG9mIGRhdGEgZW5naW5lZXJpbmcgXyBwbGFuIGFuZCBidWlsZCByb2J1c3QgLS0gSm9lIFJlaXMgYW5kIE1hdHQgSG91c2xleS5wZGYiLCJpYXQiOjE3NjMyNTQ4NzEsImV4cCI6MTc5NDc5MDg3MX0.iJNaL68V6jDq_Dhl5_Y4oTDXg913H08o-AnY4z7RNJI">
-                    <div
-                        class="max-w-60 rounded-3xl bg-amber-700 transition duration-75 hover:scale-102 hover:bg-amber-800 h-full">
-                        <img class="rounded-3xl p-1.5"
-                            src="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/81+oMD7Lm7L._SL1500_.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvODErb01EN0xtN0wuX1NMMTUwMF8uanBnIiwiaWF0IjoxNzYzMjYwMzc3LCJleHAiOjE3OTQ3OTYzNzd9.Cf5ds-OEm4ycSd9CG45CL8FJj2KAtxmHZpSycnFGzBQ"
-                            alt="Sunset in the mountains" />
-                        <div class="px-3 py-1">
-                            <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Fundamentals of Data
-                                Engineering: Plan and Build Robust Data Systems
-                            </div>
-                            <p class="mb-2 text-base text-gray-300 line-clamp-1">Joe Reis, Matt Housley</p>
+        <div class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
+            <a
+                href="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/Fundamentals%20of%20data%20engineering%20_%20plan%20and%20build%20robust%20--%20Joe%20Reis%20and%20Matt%20Housley.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvRnVuZGFtZW50YWxzIG9mIGRhdGEgZW5naW5lZXJpbmcgXyBwbGFuIGFuZCBidWlsZCByb2J1c3QgLS0gSm9lIFJlaXMgYW5kIE1hdHQgSG91c2xleS5wZGYiLCJpYXQiOjE3NjMyNTQ4NzEsImV4cCI6MTc5NDc5MDg3MX0.iJNaL68V6jDq_Dhl5_Y4oTDXg913H08o-AnY4z7RNJI">
+                <div
+                    class="max-w-60 rounded-3xl bg-amber-700 transition duration-75 hover:scale-102 hover:bg-amber-800 h-full">
+                    <img class="rounded-3xl p-1.5"
+                        src="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/81+oMD7Lm7L._SL1500_.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvODErb01EN0xtN0wuX1NMMTUwMF8uanBnIiwiaWF0IjoxNzYzMjYwMzc3LCJleHAiOjE3OTQ3OTYzNzd9.Cf5ds-OEm4ycSd9CG45CL8FJj2KAtxmHZpSycnFGzBQ"
+                        alt="Sunset in the mountains" />
+                    <div class="px-3 py-1">
+                        <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Fundamentals of Data
+                            Engineering: Plan and Build Robust Data Systems
                         </div>
+                        <p class="mb-2 text-base text-gray-300 line-clamp-1">Joe Reis, Matt Housley</p>
                     </div>
-                </a>
+                </div>
+            </a>
 
-                <a
-                    href="https://raw.github.com/los-andes-labs/library/2f37d06f5a9cde0bfa9f55f52bbd89dd17e8afbf/Python%20Data%20Science%20Handbook.pdf">
-                    <div class="max-w-60 rounded-3xl bg-blue-700 duration-75 hover:scale-102 hover:bg-blue-800 h-full">
-                        <img class="rounded-3xl p-1.5"
-                            src="https://m.media-amazon.com/images/I/71uagb-QdBL._SL1500_.jpg"
-                            alt="Sunset in the mountains" />
-                        <div class="px-3 py-1">
-                            <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">
-                                Docker: Up & Running</div>
-                            <p class="mb-2 text-base text-gray-300 line-clamp-1">Kane, Matthias</p>
-                        </div>
+            <a
+                href="https://raw.github.com/los-andes-labs/library/2f37d06f5a9cde0bfa9f55f52bbd89dd17e8afbf/Python%20Data%20Science%20Handbook.pdf">
+                <div class="max-w-60 rounded-3xl bg-blue-700 duration-75 hover:scale-102 hover:bg-blue-800 h-full">
+                    <img class="rounded-3xl p-1.5" src="https://m.media-amazon.com/images/I/71uagb-QdBL._SL1500_.jpg" />
+                    <div class="px-3 py-1">
+                        <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">
+                            Docker: Up & Running</div>
+                        <p class="mb-2 text-base text-gray-300 line-clamp-1">Kane, Matthias</p>
                     </div>
-                </a>
+                </div>
+            </a>
 
-                <a
-                    href="https://raw.github.com/los-andes-labs/library/2f37d06f5a9cde0bfa9f55f52bbd89dd17e8afbf/Python%20Data%20Science%20Handbook.pdf">
-                    <div
-                        class="max-w-60 rounded-3xl bg-green-700 duration-75 hover:scale-102 hover:bg-green-800 h-full">
-                        <img class="rounded-3xl p-1.5"
-                            src="https://m.media-amazon.com/images/I/81TuTt5Sz3L._SL1500_.jpg"
-                            alt="Sunset in the mountains" />
-                        <div class="px-3 py-1">
-                            <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Terraform: Up and Running:
-                                Writing Infrastructure as Code</div>
-                            <p class="mb-2 text-base text-gray-300 line-clamp-1">Brikman, Yevgeniy </p>
-                        </div>
+            <a
+                href="https://raw.github.com/los-andes-labs/library/2f37d06f5a9cde0bfa9f55f52bbd89dd17e8afbf/Python%20Data%20Science%20Handbook.pdf">
+                <div class="max-w-60 rounded-3xl bg-green-700 duration-75 hover:scale-102 hover:bg-green-800 h-full">
+                    <img class="rounded-3xl p-1.5" src="https://m.media-amazon.com/images/I/81TuTt5Sz3L._SL1500_.jpg"
+                        alt="Sunset in the mountains" />
+                    <div class="px-3 py-1">
+                        <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Terraform: Up and Running:
+                            Writing Infrastructure as Code</div>
+                        <p class="mb-2 text-base text-gray-300 line-clamp-1">Brikman, Yevgeniy </p>
                     </div>
-                </a>
-            </div>
-
+                </div>
+            </a>
         </div>
 
-        <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
+    </div>
 
-        <div class="m-5">
-            <h1 class="font-mono text-white text-2xl">DevOps</h1>
-            <h3 class="font-mono text-white text-md">(Developer Operations)</h3>
-            <div id="library" class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
-                <a href="https://google.com">
-                    <div
-                        class="max-w-60 rounded-3xl bg-gray-700 transition duration-75 hover:scale-102 hover:bg-gray-800 h-full">
-                        <img class="rounded-3xl p-1.5"
-                            src="https://m.media-amazon.com/images/I/81obLZ3AbEL._SL1500_.jpg"
-                            alt="Sunset in the mountains" />
-                        <div class="px-3 py-1">
-                            <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Kubernetes: Up and Running
-                            </div>
-                            <p class="mb-2 text-base text-gray-300 line-clamp-1">Brendan Burns, Joe Beda</p>
+    <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
+
+    <div class="m-5">
+        <h1 class="font-mono text-white text-2xl">DevOps</h1>
+        <h3 class="font-mono text-white text-md">(Developer Operations)</h3>
+        <div class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
+            <a href="https://google.com">
+                <div
+                    class="max-w-60 rounded-3xl bg-gray-700 transition duration-75 hover:scale-102 hover:bg-gray-800 h-full">
+                    <img class="rounded-3xl p-1.5" src="https://m.media-amazon.com/images/I/81obLZ3AbEL._SL1500_.jpg"
+                        alt="Sunset in the mountains" />
+                    <div class="px-3 py-1">
+                        <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Kubernetes: Up and Running
                         </div>
+                        <p class="mb-2 text-base text-gray-300 line-clamp-1">Brendan Burns, Joe Beda</p>
                     </div>
-                </a>
+                </div>
+            </a>
 
-                <a
-                    href="https://raw.github.com/los-andes-labs/library/2f37d06f5a9cde0bfa9f55f52bbd89dd17e8afbf/Python%20Data%20Science%20Handbook.pdf">
-                    <div class="max-w-60 rounded-3xl bg-blue-700 duration-75 hover:scale-102 hover:bg-blue-800 h-full">
-                        <img class="rounded-3xl p-1.5"
-                            src="https://m.media-amazon.com/images/I/71uagb-QdBL._SL1500_.jpg"
-                            alt="Sunset in the mountains" />
-                        <div class="px-3 py-1">
-                            <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">
-                                Docker: Up & Running</div>
-                            <p class="mb-2 text-base text-gray-300 line-clamp-1">Kane, Matthias</p>
-                        </div>
+            <a
+                href="https://raw.github.com/los-andes-labs/library/2f37d06f5a9cde0bfa9f55f52bbd89dd17e8afbf/Python%20Data%20Science%20Handbook.pdf">
+                <div class="max-w-60 rounded-3xl bg-blue-700 duration-75 hover:scale-102 hover:bg-blue-800 h-full">
+                    <img class="rounded-3xl p-1.5" src="https://m.media-amazon.com/images/I/71uagb-QdBL._SL1500_.jpg"
+                        alt="Sunset in the mountains" />
+                    <div class="px-3 py-1">
+                        <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">
+                            Docker: Up & Running</div>
+                        <p class="mb-2 text-base text-gray-300 line-clamp-1">Kane, Matthias</p>
                     </div>
-                </a>
+                </div>
+            </a>
 
-                <a
-                    href="https://raw.github.com/los-andes-labs/library/2f37d06f5a9cde0bfa9f55f52bbd89dd17e8afbf/Python%20Data%20Science%20Handbook.pdf">
-                    <div
-                        class="max-w-60 rounded-3xl bg-green-700 duration-75 hover:scale-102 hover:bg-green-800 h-full">
-                        <img class="rounded-3xl p-1.5"
-                            src="https://m.media-amazon.com/images/I/81TuTt5Sz3L._SL1500_.jpg"
-                            alt="Sunset in the mountains" />
-                        <div class="px-3 py-1">
-                            <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Terraform: Up and Running:
-                                Writing Infrastructure as Code</div>
-                            <p class="mb-2 text-base text-gray-300 line-clamp-1">Brikman, Yevgeniy </p>
-                        </div>
+            <a
+                href="https://raw.github.com/los-andes-labs/library/2f37d06f5a9cde0bfa9f55f52bbd89dd17e8afbf/Python%20Data%20Science%20Handbook.pdf">
+                <div class="max-w-60 rounded-3xl bg-green-700 duration-75 hover:scale-102 hover:bg-green-800 h-full">
+                    <img class="rounded-3xl p-1.5" src="https://m.media-amazon.com/images/I/81TuTt5Sz3L._SL1500_.jpg"
+                        alt="Sunset in the mountains" />
+                    <div class="px-3 py-1">
+                        <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Terraform: Up and Running:
+                            Writing Infrastructure as Code</div>
+                        <p class="mb-2 text-base text-gray-300 line-clamp-1">Brikman, Yevgeniy </p>
                     </div>
-                </a>
-            </div>
-
+                </div>
+            </a>
         </div>
 
-        <hr class="m-2 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
+    </div>
 
-        <div class="m-5">
+    <div id="categories-root"></div>
 
-
-            <h1 class="text-white text-2xl">SWE</h1>
-            <h3 class="text-white text-md">(Software Engineering)</h3>
-
-
-
-        </div>
-
-        <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-        <div class="m-5">
-
-
-            <h1 class="text-white text-2xl">Data Engineering</h1>
-            <h3 class="text-white text-md">(DE)</h3>
-
-        </div>
-
-        <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-        <div class="m-5">
-
-
-            <h1 class="text-white text-2xl">Python</h1>
-            <h3 class="text-white text-md">(.py)</h3>
-
-            <div id="library" class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
-                <a
-                    href="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/Fluent%20Python.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvRmx1ZW50IFB5dGhvbi5wZGYiLCJpYXQiOjE3NjMyNjExNzEsImV4cCI6MTc5NDc5NzE3MX0.SXVUdl7WtakAZd4Da6URo2o-_dxnsTHFPEMUTFwDSI0">
-                    <div
-                        class="max-w-60 rounded-3xl bg-amber-700 transition duration-75 hover:scale-102 hover:bg-amber-800 h-full">
-                        <img class="rounded-3xl p-1.5"
-                            src="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/81OvszBEdhL._SL1500_.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvODFPdnN6QkVkaEwuX1NMMTUwMF8uanBnIiwiaWF0IjoxNzYzMjYwOTc1LCJleHAiOjE3OTQ3OTY5NzV9.nmIJ6wSpuKyiWYgahvr0FJOJ_Ha335ayDHFIFFh7u5w"
-                            alt="Sunset in the mountains" />
-                        <div class="px-3 py-1">
-                            <p id="title_book" class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Fluent
-                                Python: Clear, Concise, and Effective Programming
-                            </p>
-                            <p id="author" class="mb-2 text-base text-gray-300 line-clamp-1">Joe Reis, Matt Housley</p>
-                        </div>
-                    </div>
-                </a>
-
-            </div>
-        </div>
-
-
-        <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-        <div class="m-5">
-
-            <h1 class="text-white text-2xl">Machine Learning</h1>
-            <h3 class="text-white text-md">(ML)</h3>
-
-            <div id="library" class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
-
-                <a
-                    href="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/Machine%20learning%20design%20patterns%20_%20solutions%20to%20common.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvTWFjaGluZSBsZWFybmluZyBkZXNpZ24gcGF0dGVybnMgXyBzb2x1dGlvbnMgdG8gY29tbW9uLnBkZiIsImlhdCI6MTc2MzI2MTQ4OCwiZXhwIjoxNzk0Nzk3NDg4fQ.oqZGIQUjJju309wkMWBCsTKSmFIUoHoiFWIBE-VJQ70">
-                    <div
-                        class="max-w-60 rounded-3xl bg-red-700 transition duration-75 hover:scale-102 hover:bg-red-800 h-full">
-                        <img class="rounded-3xl p-1.5"
-                            src="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/81Gw--pXkzL._SL1500_.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvODFHdy0tcFhrekwuX1NMMTUwMF8uanBnIiwiaWF0IjoxNzYzMjYxNTY1LCJleHAiOjE3OTQ3OTc1NjV9.Z2HebBeZhzFnuRmhXU2_iMPdnOsrwWii50qJW_HWf8o"
-                            alt="Sunset in the mountains" />
-                        <div class="px-3 py-1">
-                            <p id="title_book" class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Fluent
-                                Python:
-                                Clear, Concise, and Effective Programming
-                            </p>
-                            <p id="author" class="mb-2 text-base text-gray-300 line-clamp-1">Valliappa Lakshmanan, Sara Robinson, Michael Munn</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-        <div class="m-5">
-
-
-            <h1 class="text-white text-2xl">Data Analytics</h1>
-            <h3 class="text-white text-md">(DA)</h3>
-
-        </div>
-    </body>
 </body>
+
+<script src="js/supabaseClient.js"></script>
+
+<script src="js/components/cardComponent.js"></script>
+<script src="js/components/sectionCategoryComponent.js"></script>
+
+<script>
+    let supabase = window.supabase.createClient(
+        "https://buykkihkvljctcahbsjq.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1eWtraWhrdmxqY3RjYWhic2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTM2MDAsImV4cCI6MjA3ODYyOTYwMH0.laSDQ4L4q7XlS3t7UrFMAEXVMKY2yCH9CzyNiyjCKwo"
+    );
+</script>
+
+<script>
+    var COLORS = {
+        gray: "bg-gray",
+        red: "bg-red",
+        blue: "bg-blue",
+        green: "bg-green",
+        orange: "bg-orange",
+        amber: "bg-amber",
+        yellow: "bg-yellow",
+        orange: "bg-orange",
+    };
+</script>
+
+<script>
+    async function loadCategory(categoryName, containerId) {
+
+        const container = document.getElementById(containerId);
+
+        const { data, error } = await supabase
+            .from("db_dataleake")
+            .select("*")
+            .contains("category", [categoryName]);
+
+        for (const book of data) {
+            const card = htmlCardComponent(
+                COLORS[book.color],
+                book.url_image,
+                book.title,
+                book.author
+            );
+            container.insertAdjacentHTML("beforeend", card);
+        }
+    }
+</script>
+
+<script>
+    async function loadAllCategories() {
+        const { data, error } = await supabase
+            .from("db_dataleake")
+            .select("category");
+
+        const categories = new Set();
+
+        for (const row of data) {
+            if (Array.isArray(row.category)) {
+                row.category.forEach(cat => categories.add(cat));
+            }
+        }
+
+        return Array.from(categories);
+    }
+
+</script>
+
+<script>
+    async function initDynamicCategories() {
+
+        const categories = await loadAllCategories();
+        const root = document.getElementById("categories-root");
+
+        for (const category of categories) {
+            const containerId = `category-${category.toLowerCase().replace(/\s+/g, "_")}-catalog`;
+
+            const section = htmlSectionCategoryComponent(category, containerId);
+
+            root.insertAdjacentHTML("beforeend", section);
+
+            loadCategory(category, containerId);
+        }
+    }
+
+    initDynamicCategories();
+
+</script>
 
 </html>
