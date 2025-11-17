@@ -142,6 +142,16 @@
 </script>
 
 <script>
+    async function getPdfSignedUrl(filePath) {
+        const { data, error } = await supabase.storage
+            .from("dataleake")
+            .createSignedUrl(filePath, 3600);
+        console.log(error)
+        return data?.signedUrl;
+    }
+</script>
+
+<script>
     async function loadCategory(categoryName, containerId) {
 
         const container = document.getElementById(containerId);
@@ -156,7 +166,8 @@
                 COLORS[book.color],
                 book.url_image,
                 book.title,
-                book.author
+                book.author,
+                book.file_path,
             );
             container.insertAdjacentHTML("beforeend", card);
         }
