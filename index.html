@@ -123,100 +123,21 @@
 
     </div>
 
-    <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-    <div class="m-5">
 
-
-        <h1 class="text-white text-2xl">Data Engineering</h1>
-        <h3 class="text-white text-md">(DE)</h3>
-
-    </div>
-
-    <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-    <div class="m-5">
-
-
-        <h1 class="text-white text-2xl">Python</h1>
-        <h3 class="text-white text-md">(.py)</h3>
-
-        <div class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
-            <a
-                href="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/Fluent%20Python.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvRmx1ZW50IFB5dGhvbi5wZGYiLCJpYXQiOjE3NjMyNjExNzEsImV4cCI6MTc5NDc5NzE3MX0.SXVUdl7WtakAZd4Da6URo2o-_dxnsTHFPEMUTFwDSI0">
-                <div
-                    class="max-w-60 rounded-3xl bg-amber-700 transition duration-75 hover:scale-102 hover:bg-amber-800 h-full">
-                    <img class="rounded-3xl p-1.5"
-                        src="https://buykkihkvljctcahbsjq.supabase.co/storage/v1/object/sign/dataleake/81OvszBEdhL._SL1500_.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV81MDg4ZmQ4Zi02YWUwLTQ5ZGMtYmY4ZS0yZDkwZDY3YzMyMjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkYXRhbGVha2UvODFPdnN6QkVkaEwuX1NMMTUwMF8uanBnIiwiaWF0IjoxNzYzMjYwOTc1LCJleHAiOjE3OTQ3OTY5NzV9.nmIJ6wSpuKyiWYgahvr0FJOJ_Ha335ayDHFIFFh7u5w"
-                        alt="Sunset in the mountains" />
-                    <div class="px-3 py-1">
-                        <p class="title_book" class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">Fluent
-                            Python: Clear, Concise, and Effective Programming
-                        </p>
-                        <p class="author" class="mb-2 text-base text-gray-300 line-clamp-1">Joe Reis, Matt Housley</p>
-                    </div>
-                </div>
-            </a>
-
-        </div>
-    </div>
-
-
-    <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-    <div class="m-5">
-
-        <h1 class="text-white text-2xl">Machine Learning</h1>
-        <h3 class="text-white text-md">(ML)</h3>
-
-        <div id="category-machine_learning-catalog" class="flex grid-cols-1 bg-gray-950 my-5 gap-5"></div>
-
-    </div>
-
-    <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-    <div class="m-5">
-
-
-        <h1 class="text-white text-2xl">Data Analytics</h1>
-        <h3 class="text-white text-md">(DA)</h3>
-
-    </div>
-
-
-    <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
-
-    <div id="category-databases-container" class="m-5">
-
-        <h1 class="text-white text-2xl">Databases</h1>
-        <h3 class="text-white text-md">(DBs)</h3>
-
-        <div id="category-databases-catalog" class="flex grid-cols-1 bg-gray-950 my-5 gap-5"></div>
-
-    </div>
+    <div id="categories-root"></div>
 
 </body>
 
+<script src="js/supabaseClient.js"></script>
+
+<script src="js/components/cardComponent.js"></script>
+<script src="js/components/sectionCategoryComponent.js"></script>
+
 <script>
-    const supabase = window.supabase.createClient(
+    let supabase = window.supabase.createClient(
         "https://buykkihkvljctcahbsjq.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1eWtraWhrdmxqY3RjYWhic2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTM2MDAsImV4cCI6MjA3ODYyOTYwMH0.laSDQ4L4q7XlS3t7UrFMAEXVMKY2yCH9CzyNiyjCKwo"
     );
-</script>
-
-<script>
-    function htmlCardComponent(bg_color, url_image, book_title, authors_book) {
-        let component = `
-            <a href="#">
-                <div
-                    class="max-w-60 rounded-3xl ${bg_color}-700 transition duration-75 hover:scale-102 hover:${bg_color}-800 h-full">
-                    <img class="rounded-3xl p-1.5" src="${url_image}"
-                        alt="Sunset in the mountains" />
-                    <div class="px-3 py-1">
-                        <div class="text-md mt-0 mb-0 font-bold text-white line-clamp-2">${book_title} 
-                        </div>
-                        <p class="mb-2 text-base text-gray-300 line-clamp-1">${authors_book.join(', ')}</p>
-                    </div>
-                </div>
-            </a>`
-        return component;
-    }
 </script>
 
 <script>
@@ -227,7 +148,32 @@
         green: "bg-green",
         orange: "bg-orange",
         amber: "bg-amber",
+        yellow: "bg-yellow",
+        orange: "bg-orange",
     };
+</script>
+
+
+<script>
+    async function loadCategory(categoryName, containerId) {
+
+        const container = document.getElementById(containerId);
+
+        const { data, error } = await supabase
+            .from("db_dataleake")
+            .select("*")
+            .contains("category", [categoryName]);
+
+        for (const book of data) {
+            const card = htmlCardComponent(
+                COLORS[book.color],
+                book.url_image,
+                book.title,
+                book.author
+            );
+            container.insertAdjacentHTML("beforeend", card);
+        }
+    }
 </script>
 
 <script>
@@ -250,23 +196,24 @@
 </script>
 
 <script>
-    async function loadCategory(categoryName, containerId) {
+    async function initDynamicCategories() {
 
-        const container = document.getElementById(containerId);
+        const categories = await loadAllCategories();
+        const root = document.getElementById("categories-root");
 
-        const { data, error } = await supabase
-            .from("db_dataleake")
-            .select("*")
-            .contains("category", [categoryName]);
+        for (const category of categories) {
+            const containerId = `category-${category.toLowerCase().replace(/\s+/g, "_")}-catalog`;
 
-        for (const book of data) {
-            const card = htmlCardComponent(COLORS[book.color], book.url_image, book.title, book.author);
-            container.insertAdjacentHTML("beforeend", card);
+            const section = htmlSectionCategoryComponent(category, containerId);
+
+            root.insertAdjacentHTML("beforeend", section);
+
+            loadCategory(category, containerId);
         }
     }
 
-    loadCategory("Databases", "category-databases-catalog");
-    loadCategory("Machine Learning", "category-machine_learning-catalog");
+    initDynamicCategories();
+
 </script>
 
 </html>
