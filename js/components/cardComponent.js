@@ -1,5 +1,5 @@
-    function htmlCardComponent(bg_color, url_image, book_title, authors_book) {
-        let component = `
+function htmlCardComponent(bg_color, url_image, book_title, authors_book) {
+    let component = `
             <a href="#">
                 <div
                     class="max-w-60 rounded-3xl ${bg_color}-700 transition duration-75 hover:scale-102 hover:${bg_color}-800 h-full">
@@ -12,5 +12,5 @@
                     </div>
                 </div>
             </a>`
-        return component;
-    }
+    return component;
+}
