@@ -8,7 +8,6 @@ function htmlSectionCategoryComponent(category, containerId) {
                 <div id="${containerId}" class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
                 </div>
             </section>
-
         `
     return component;
 }
