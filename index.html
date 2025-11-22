@@ -11,35 +11,32 @@
 
 <body class="bg-gray-950">
 
-    <h1 class="font-mono m-3 text-white text-2xl text-center">DataLeake</h1>
-    <hr class="mb-2 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10 w-full" />
-
-    <nav class="flex justify-center">
-        <a href="#category-apis-catalog" class="font-bold rounded-lg px-3 py-2 text-gray-100 hover:text-blue-600">
-            APIs
-        </a>
-        <a href="#category-devops-catalog" class="font-bold rounded-lg px-3 py-2 text-gray-100 hover:text-blue-600">
-            DevOps
-        </a>
-        <a href="#category-databases-catalog" class="font-bold rounded-lg px-3 py-2 text-gray-100 hover:text-blue-600">
-            Databases
-        </a>
-        <a href="#category-data_engineering-catalog" class="font-bold rounded-lg px-3 py-2 text-gray-100 hover:text-blue-600">
-            Data Engineering
-        </a>
-                <a href="#category-machine_learning-catalog" class="font-bold rounded-lg px-3 py-2 text-gray-100 hover:text-blue-600">
-            Machine Learning
-        </a>
-    </nav>
-
     <div id="categories-root"></div>
 
 </body>
 
 <script src="js/supabaseClient.js"></script>
 
+<script src="js/components/headerComponent.js"></script>
+<script src="js/components/navbarComponent.js"></script>
 <script src="js/components/cardComponent.js"></script>
-<script src="js/components/sectionCategoryComponent.js"></script>
+
+<script>
+    function loadHeader(){
+        const body = document.querySelector('body');
+        body.insertAdjacentHTML("afterbegin", htmlHeaderComponent());
+    }
+
+    loadHeader();
+</script>
+
+<script>
+    function loadNavbar() {
+        const body = document.querySelector('body');
+        body.insertAdjacentHTML("beforeend", htmlNavbarComponent());
+    }
+    loadNavbar();
+</script>
 
 <script>
     let supabase = window.supabase.createClient(
@@ -76,7 +73,6 @@
         const { data, error } = await supabase.storage
             .from("dataleake")
             .createSignedUrl(filePath, 3600);
-        console.log(error)
         return data?.signedUrl;
     }
 </script>
@@ -95,6 +91,7 @@
             const card = htmlCardComponent(
                 COLORS[book.color],
                 book.url_image_front_cover,
+                book.url_image_back_cover,
                 book.title,
                 book.author,
                 book.file_path,
