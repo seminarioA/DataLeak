@@ -5,7 +5,9 @@ function htmlSectionCategoryComponent(category, containerId) {
                 <h2 class="font-mono text-white text-2xl">
                     ${category}
                 </h2>
-                <div id="${containerId}" class="flex grid-cols-1 bg-gray-950 my-5 gap-5">
+                <div id="${containerId}" class="snap-x flex grid-cols-1 bg-gray-950 my-5 gap-5"
+                style="overflow-x: scroll; scrollbar-color: #364153 #101828; padding-bottom: 1rem;">
+                
                 </div>
             </section>
         `
