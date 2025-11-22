@@ -1,9 +1,9 @@
 function htmlNavbarComponent() {
     let navbar = `
-        <nav class="flex flex - wrap gap - 1 justify - center">
-            < a href = "#category-apis-catalog" class="font-bold rounded-lg px-3 py-2 text-gray-100 hover:text-blue-600" >
-                APIs
-            </a >
+        <nav class="flex flex-wrap gap-1 justify-center">
+            <a href="#category-apis-catalog" class="font-bold rounded-lg px-3 py-2 text-gray-100 hover:text-blue-600">
+            APIs
+            </a>   
             <a href="#category-devops-catalog" class="font-bold rounded-lg px-3 py-2 text-gray-100 hover:text-blue-600">
             DevOps
             </a>

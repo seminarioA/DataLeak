@@ -10,9 +10,6 @@
 </head>
 
 <body class="bg-gray-950">
-
-    <div id="categories-root"></div>
-
 </body>
 
 <script src="js/supabaseClient.js"></script>
@@ -20,6 +17,7 @@
 <script src="js/components/headerComponent.js"></script>
 <script src="js/components/navbarComponent.js"></script>
 <script src="js/components/cardComponent.js"></script>
+<script src="js/components/sectionCategoryComponent.js"></script>
 
 <script>
     function loadHeader() {
@@ -121,8 +119,12 @@
 
 <script>
     async function initDynamicCategories() {
+        const body = document.querySelector('body');
+        
+        body.insertAdjacentHTML("beforeend", '<div id="categories-root"></div');
 
         const categories = await loadAllCategories();
+
         const root = document.getElementById("categories-root");
 
         for (const category of categories) {
