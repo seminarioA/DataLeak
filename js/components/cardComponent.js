@@ -11,6 +11,7 @@ function htmlCardComponent(bg_color, url_image, book_title, authors_book, book_f
                         <p class="mb-2 text-base text-gray-300 line-clamp-1">${authors_book.join(', ')}</p>
                     </div>
                 </div>
+                
     </a>
             `
     return component;
