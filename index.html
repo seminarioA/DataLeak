@@ -10,18 +10,31 @@
 </head>
 
 <body class="bg-gray-950">
-
-    <h1 class="font-mono m-3 text-white text-2xl text-center">DataLeake</h1>
-    <hr class="mb-2 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10 w-full" />
-
-    <div id="categories-root"></div>
-
 </body>
 
 <script src="js/supabaseClient.js"></script>
 
+<script src="js/components/headerComponent.js"></script>
+<script src="js/components/navbarComponent.js"></script>
 <script src="js/components/cardComponent.js"></script>
 <script src="js/components/sectionCategoryComponent.js"></script>
+
+<script>
+    function loadHeader() {
+        const body = document.querySelector('body');
+        body.insertAdjacentHTML("afterbegin", htmlHeaderComponent());
+    }
+
+    loadHeader();
+</script>
+
+<script>
+    function loadNavbar() {
+        const body = document.querySelector('body');
+        body.insertAdjacentHTML("beforeend", htmlNavbarComponent());
+    }
+    loadNavbar();
+</script>
 
 <script>
     let supabase = window.supabase.createClient(
@@ -58,7 +71,6 @@
         const { data, error } = await supabase.storage
             .from("dataleake")
             .createSignedUrl(filePath, 3600);
-        console.log(error)
         return data?.signedUrl;
     }
 </script>
@@ -76,7 +88,8 @@
         for (const book of data) {
             const card = htmlCardComponent(
                 COLORS[book.color],
-                book.url_image,
+                book.url_image_front_cover,
+                book.url_image_back_cover,
                 book.title,
                 book.author,
                 book.file_path,
@@ -106,8 +119,12 @@
 
 <script>
     async function initDynamicCategories() {
+        const body = document.querySelector('body');
+        
+        body.insertAdjacentHTML("beforeend", '<div id="categories-root"></div');
 
         const categories = await loadAllCategories();
+
         const root = document.getElementById("categories-root");
 
         for (const category of categories) {
