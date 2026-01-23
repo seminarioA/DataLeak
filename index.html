@@ -18,6 +18,7 @@
 <script src="js/components/navbarComponent.js"></script>
 <script src="js/components/cardComponent.js"></script>
 <script src="js/components/sectionCategoryComponent.js"></script>
+<script src="js/components/footerComponent.js"></script>
 
 <script>
     function loadHeader() {
@@ -35,8 +36,6 @@
     }
     loadNavbar();
 </script>
-
-
 
 <script>
     async function downloadBook(filePath) {
@@ -138,6 +137,14 @@
 
     initDynamicCategories();
 
+</script>
+
+<script>
+    function loadFooter() {
+        const body = document.querySelector('body');
+        body.insertAdjacentHTML("beforeend", htmlFooterComponent());
+    }
+    loadFooter();
 </script>
 
 </html>
