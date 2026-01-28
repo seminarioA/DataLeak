@@ -39,10 +39,18 @@
 
 <script>
     async function downloadBook(filePath) {
-        const { data, error } = await supabase.storage
-            .from("dataleake")
-            .createSignedUrl(filePath, 3600);
-        window.open(data.signedUrl, "_blank");
+        const res = await fetch(
+            "https://buykkihkvljctcahbsjq.supabase.co/functions/v1/get-pdf-signed-url",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ file_path: filePath }),
+            }
+        );
+
+        const { signedUrl } = await res.json();
+
+        window.open(signedUrl, "_blank");
     }
 </script>
 
@@ -65,10 +73,18 @@
 
 <script>
     async function getPdfSignedUrl(filePath) {
-        const { data, error } = await supabase.storage
-            .from("dataleake")
-            .createSignedUrl(filePath, 3600);
-        return data?.signedUrl;
+        const res = await fetch(
+            "https://buykkihkvljctcahbsjq.supabase.co/functions/v1/get-pdf-signed-url",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ file_path: filePath }),
+            }
+        );
+
+        const { signedUrl } = await res.json();
+
+        return signedUrl;
     }
 </script>
 
