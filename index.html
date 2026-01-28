@@ -22,16 +22,15 @@
 
 <script>
     function loadHeader() {
-        const body = document.querySelector('body');
+        const body = document.querySelector("body");
         body.insertAdjacentHTML("afterbegin", htmlHeaderComponent());
     }
-
     loadHeader();
 </script>
 
 <script>
     function loadNavbar() {
-        const body = document.querySelector('body');
+        const body = document.querySelector("body");
         body.insertAdjacentHTML("beforeend", htmlNavbarComponent());
     }
     loadNavbar();
@@ -39,15 +38,33 @@
 
 <script>
     async function downloadBook(filePath) {
-        const { data, error } = await supabase.storage
-            .from("dataleake")
-            .createSignedUrl(filePath, 3600);
-        window.open(data.signedUrl, "_blank");
+            const res = await fetch(
+                "https://buykkihkvljctcahbsjq.supabase.co/functions/v1/get-pdf-signed-url",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ file_path: filePath }),
+                }
+            );
+
+            if (!res.ok) {
+                throw new Error("Failed to generate signed URL");
+            }
+
+            const { signedUrl } = await res.json();
+
+            if (!signedUrl) {
+                throw new Error("Signed URL missing");
+            }
+
+            window.open(signedUrl, "_blank");
     }
 </script>
 
 <script>
-    var COLORS = {
+    const COLORS = {
         gray: "bg-gray",
         red: "bg-red",
         blue: "bg-blue",
@@ -55,7 +72,6 @@
         orange: "bg-orange",
         amber: "bg-amber",
         yellow: "bg-yellow",
-        orange: "bg-orange",
         purple: "bg-purple",
         teal: "bg-teal",
         cyan: "bg-cyan",
@@ -64,23 +80,18 @@
 </script>
 
 <script>
-    async function getPdfSignedUrl(filePath) {
-        const { data, error } = await supabase.storage
-            .from("dataleake")
-            .createSignedUrl(filePath, 3600);
-        return data?.signedUrl;
-    }
-</script>
-
-<script>
     async function loadCategory(categoryName, containerId) {
-
         const container = document.getElementById(containerId);
 
         const { data, error } = await supabase
             .from("db_dataleake")
             .select("*")
             .contains("category", [categoryName]);
+
+        if (error) {
+            console.error(error);
+            return;
+        }
 
         for (const book of data) {
             const card = htmlCardComponent(
@@ -89,7 +100,7 @@
                 book.url_image_back_cover,
                 book.title,
                 book.author,
-                book.file_path,
+                book.file_path
             );
             container.insertAdjacentHTML("beforeend", card);
         }
@@ -101,6 +112,11 @@
         const { data, error } = await supabase
             .from("db_dataleake")
             .select("category");
+
+        if (error) {
+            console.error(error);
+            return [];
+        }
 
         const categories = new Set();
 
@@ -116,19 +132,17 @@
 
 <script>
     async function initDynamicCategories() {
-        const body = document.querySelector('body');
-        
-        body.insertAdjacentHTML("beforeend", '<div id="categories-root"></div');
+        const body = document.querySelector("body");
+        body.insertAdjacentHTML("beforeend", '<div id="categories-root"></div>');
 
         const categories = await loadAllCategories();
-
         const root = document.getElementById("categories-root");
 
         for (const category of categories) {
-            const containerId = `category-${category.toLowerCase().replace(/\s+/g, "_")}-catalog`;
+            const containerId =
+                `category-${category.toLowerCase().replace(/\s+/g, "_")}-catalog`;
 
             const section = htmlSectionCategoryComponent(category, containerId);
-
             root.insertAdjacentHTML("beforeend", section);
 
             loadCategory(category, containerId);
@@ -136,12 +150,11 @@
     }
 
     initDynamicCategories();
-
 </script>
 
 <script>
     function loadFooter() {
-        const body = document.querySelector('body');
+        const body = document.querySelector("body");
         body.insertAdjacentHTML("beforeend", htmlFooterComponent());
     }
     loadFooter();
