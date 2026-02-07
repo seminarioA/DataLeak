@@ -15,4 +15,3 @@ function htmlCardComponent(bg_color, url_image_front, url_image_back, book_title
             `
     return component;
 }
-
