@@ -6,7 +6,7 @@
 /___,' \__,_|\__\__,_\____/\___|\__,_|_|\_\___|
                                                
 ```
-
+---
 
 <img width="3944" height="2564" alt="Captura de pantalla 2026-02-09 154315-front" src="https://github.com/user-attachments/assets/42a7b182-09f6-4dca-9bff-8d9d7505c837" />
 
