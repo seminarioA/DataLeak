@@ -43,7 +43,11 @@
             "https://buykkihkvljctcahbsjq.supabase.co/functions/v1/get-pdf-signed-url",
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": supabaseKey,
+                    "Authorization": `Bearer ${supabaseKey}`,
+                },
                 body: JSON.stringify({ file_path: filePath }),
             }
         );
