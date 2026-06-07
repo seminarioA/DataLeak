@@ -332,7 +332,7 @@ async function showNewestBooks(root) {
 
 function renderRecommendationSection(root, books, title) {
     const cards = books.map(b =>
-        htmlCardComponent(COLORS[b.color] || "bg-gray", b.url_image_front_cover, b.url_image_back_cover, b.title, b.author, b.file_path, b.id)
+        htmlCardComponent(COLORS[b.color] || "bg-gray", b.url_image_front_cover, b.url_image_back_cover, b.title, b.author, b.file_path, b.uuid)
     ).join("");
 
     root.innerHTML = `
@@ -372,14 +372,13 @@ function cacheBook(book) {
 
 // ── Router ────────────────────────────────────────────────────────────────────
 
-function showBookPage(bookId) {
-    const numId = parseInt(bookId);
-    const cached = Object.values(BOOKS_CACHE).find(b => b.id === numId);
+function showBookPage(uuid) {
+    const cached = Object.values(BOOKS_CACHE).find(b => b.uuid === uuid);
 
     if (cached) {
         renderBookPage(cached);
     } else {
-        supabase.from("db_dataleake").select("*").eq("id", numId).single()
+        supabase.from("db_dataleake").select("*").eq("uuid", uuid).single()
             .then(({ data }) => {
                 if (data) { cacheBook(data); renderBookPage(data); }
             });
@@ -417,7 +416,7 @@ function navigateBack() {
 }
 
 function router() {
-    const match = window.location.hash.match(/^#\/book\/(\d+)$/);
+    const match = window.location.hash.match(/^#\/book\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     if (match) showBookPage(match[1]);
     else        showMainPage();
 }
@@ -438,7 +437,7 @@ async function loadCategory(categoryName, containerId) {
         cacheBook(book);
         container.insertAdjacentHTML("beforeend", htmlCardComponent(
             COLORS[book.color], book.url_image_front_cover, book.url_image_back_cover,
-            book.title, book.author, book.file_path, book.id,
+            book.title, book.author, book.file_path, book.uuid,
         ));
     }
 }
@@ -556,7 +555,7 @@ function renderSearchResults(books, query) {
     const cards = books.map(book => {
         cacheBook(book);
         return htmlCardComponent(COLORS[book.color] || "bg-gray", book.url_image_front_cover,
-            book.url_image_back_cover, book.title, book.author, book.file_path, book.id);
+            book.url_image_back_cover, book.title, book.author, book.file_path, book.uuid);
     }).join("");
 
     root.innerHTML = `
