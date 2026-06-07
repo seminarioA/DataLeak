@@ -100,17 +100,45 @@ function loadFooter() {
     body.insertAdjacentHTML("beforeend", htmlFooterComponent());
 }
 
+function getChunks(query, size = 3) {
+    const q = query.trim();
+    if (q.length <= size) return [q];
+    const chunks = [];
+    for (let i = 0; i <= q.length - size; i++) {
+        chunks.push(q.slice(i, i + size));
+    }
+    return [...new Set(chunks)];
+}
+
 async function searchBooks(query) {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+
+    // Split query into words, get trigrams per word, flatten
+    const words = trimmed.split(/\s+/);
+    const chunks = [...new Set(words.flatMap(w => getChunks(w, 3)))];
+
+    const orFilter = chunks.map(c => `title.ilike.%${c}%`).join(",");
+
     const { data, error } = await supabase
         .from("db_dataleake")
         .select("*")
-        .ilike("title", `%${query}%`);
+        .or(orFilter);
 
     if (error) {
         console.error("Error en búsqueda", error);
         return [];
     }
-    return data || [];
+
+    // Score by how many chunks match the title, sort best match first
+    const books = data || [];
+    return books
+        .map(book => {
+            const title = book.title.toLowerCase();
+            const score = chunks.filter(c => title.includes(c.toLowerCase())).length;
+            return { ...book, _score: score };
+        })
+        .sort((a, b) => b._score - a._score);
 }
 
 function renderSearchResults(books, query) {
