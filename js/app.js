@@ -1,11 +1,9 @@
 function loadHeader() {
-    const root = document.getElementById("page-main");
-    root.insertAdjacentHTML("beforeend", htmlHeaderComponent());
+    document.getElementById("page-header").insertAdjacentHTML("beforeend", htmlHeaderComponent());
 }
 
 function loadNavbar() {
-    const root = document.getElementById("page-main");
-    root.insertAdjacentHTML("beforeend", htmlNavbarComponent(NAVBAR_CATEGORIES));
+    document.getElementById("page-header").insertAdjacentHTML("beforeend", htmlNavbarComponent(NAVBAR_CATEGORIES));
 }
 
 async function downloadBook(filePath) {
@@ -20,6 +18,42 @@ async function downloadBook(filePath) {
     }
 
     window.open(data.signedUrl, "_blank");
+}
+
+async function togglePdfViewer(filePath) {
+    const section = document.getElementById("pdf-viewer-section");
+    const btn = document.getElementById("toggle-pdf-btn");
+    if (!section) return;
+
+    if (section.style.display !== "none") {
+        section.style.display = "none";
+        section.innerHTML = "";
+        if (btn) btn.innerHTML = '<i data-lucide="eye" style="width:16px;height:16px;"></i> Ver PDF';
+        lucide.createIcons();
+        return;
+    }
+
+    section.style.display = "";
+    section.innerHTML = `<div class="rounded-2xl border border-gray-800 bg-gray-900 flex items-center justify-center py-10 text-gray-400 font-mono text-sm">
+        <i data-lucide="loader" style="width:16px;height:16px;" class="mr-2"></i> Cargando PDF...
+    </div>`;
+    lucide.createIcons();
+    if (btn) btn.innerHTML = '<i data-lucide="eye-off" style="width:16px;height:16px;"></i> Cerrar';
+    lucide.createIcons();
+
+    const { data, error } = await supabase.storage
+        .from("dataleake")
+        .createSignedUrl(filePath, 3600);
+
+    if (error || !data?.signedUrl) {
+        section.innerHTML = `<div class="rounded-2xl border border-gray-800 bg-gray-900 flex items-center justify-center py-10 text-red-400 font-mono text-sm">No se pudo cargar el PDF.</div>`;
+        return;
+    }
+
+    section.innerHTML = `
+        <div class="rounded-2xl overflow-hidden border border-gray-800 shadow-xl">
+            <iframe src="${data.signedUrl}" style="width:100%;height:80vh;border:none;display:block;"></iframe>
+        </div>`;
 }
 
 var COLORS = {
@@ -59,8 +93,8 @@ function showBookPage(bookId) {
 }
 
 function renderBookPage(book) {
-    const pageMain   = document.getElementById("page-main");
     const pageDetail = document.getElementById("page-detail");
+    const pageMain   = document.getElementById("page-main");
     pageDetail.innerHTML = htmlBookDetailPage(book);
     pageMain.style.display   = "none";
     pageDetail.style.display = "";
@@ -71,6 +105,14 @@ function renderBookPage(book) {
 function showMainPage() {
     document.getElementById("page-main").style.display   = "";
     document.getElementById("page-detail").style.display = "none";
+}
+
+function ensureMainVisible() {
+    const detail = document.getElementById("page-detail");
+    if (detail && detail.style.display !== "none") {
+        history.pushState(null, null, window.location.pathname + window.location.search);
+        showMainPage();
+    }
 }
 
 function navigateBack() {
@@ -85,12 +127,12 @@ function router() {
 
 window.addEventListener("hashchange", router);
 
-// ── Category loading ───────────────────────────────────────────────────────────
+// ── Category loading ──────────────────────────────────────────────────────────
 
 async function loadCategory(categoryName, containerId) {
     const container = document.getElementById(`${containerId}-list`);
 
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("db_dataleake")
         .select("*")
         .contains("category", [categoryName]);
@@ -98,7 +140,7 @@ async function loadCategory(categoryName, containerId) {
     if (!data) return;
     for (const book of data) {
         cacheBook(book);
-        const card = htmlCardComponent(
+        container.insertAdjacentHTML("beforeend", htmlCardComponent(
             COLORS[book.color],
             book.url_image_front_cover,
             book.url_image_back_cover,
@@ -106,8 +148,7 @@ async function loadCategory(categoryName, containerId) {
             book.author,
             book.file_path,
             book.id,
-        );
-        container.insertAdjacentHTML("beforeend", card);
+        ));
     }
 }
 
@@ -197,8 +238,8 @@ async function searchBooks(query) {
 }
 
 function renderSearchResults(books, query) {
-    const root        = document.getElementById("search-results-root");
-    const catRoot     = document.getElementById("categories-root");
+    const root    = document.getElementById("search-results-root");
+    const catRoot = document.getElementById("categories-root");
 
     if (!query.trim()) {
         root.style.display = "none";
@@ -247,6 +288,7 @@ function initSearch() {
     if (!input) return;
     let debounceTimer;
     input.addEventListener("input", () => {
+        ensureMainVisible();
         clearTimeout(debounceTimer);
         const query = input.value;
         debounceTimer = setTimeout(async () => {
