@@ -210,17 +210,27 @@ async function toggleBookIndex(filePath) {
     const book = BOOKS_CACHE[filePath];
     if (!book) return;
 
-    // 1 — Check Supabase cache first
-    const { data: cached } = await supabase
-        .from("book_toc").select("toc").eq("book_id", book.id).maybeSingle();
-
-    if (cached?.toc) {
-        renderTocSection(section, cached.toc);
+    // 1 — localStorage cache (instant, always available)
+    const localKey = `toc_${book.id}`;
+    const localToc = localStorage.getItem(localKey);
+    if (localToc) {
+        renderTocSection(section, JSON.parse(localToc));
         return;
     }
 
-    // 2 — Extract from PDF with page numbers
-    section.innerHTML = INDEX_SPINNER.replace("Cargando índice...", "Extrayendo índice (primera vez)...");
+    // 2 — Supabase cache (persisted across devices)
+    try {
+        const { data: cached } = await supabase
+            .from("book_toc").select("toc").eq("book_id", book.id).maybeSingle();
+        if (cached?.toc) {
+            localStorage.setItem(localKey, JSON.stringify(cached.toc));
+            renderTocSection(section, cached.toc);
+            return;
+        }
+    } catch (_) {}
+
+    // 3 — Extract from PDF with page numbers (first time only)
+    section.innerHTML = INDEX_SPINNER.replace("Cargando índice...", "Extrayendo índice...");
 
     const { data: urlData, error } = await supabase.storage
         .from("dataleake").createSignedUrl(filePath, 3600);
@@ -237,7 +247,10 @@ async function toggleBookIndex(filePath) {
 
         const toc = await extractOutlineWithPages(pdf, raw, 0);
 
-        // 3 — Persist to Supabase (upsert)
+        // Save to localStorage (always works)
+        localStorage.setItem(localKey, JSON.stringify(toc));
+
+        // Try to persist to Supabase too (silently)
         supabase.from("book_toc")
             .upsert({ book_id: book.id, toc, extracted_at: new Date().toISOString() })
             .then(({ error: e }) => { if (e) console.warn("TOC save error", e); });
