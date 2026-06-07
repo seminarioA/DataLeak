@@ -71,18 +71,26 @@ function htmlBookDetailPage(book) {
                 </div>
 
                 <!-- Buttons pinned to bottom -->
-                <div class="flex gap-3 mt-auto pt-2">
+                <div class="flex flex-col gap-2 mt-auto pt-2">
                     <button onclick="downloadBook('${safeFilePath}')"
-                            class="flex-1 flex items-center gap-2 justify-center px-4 py-2.5 rounded-xl text-white font-bold transition cursor-pointer text-sm bg-black/25 hover:bg-black/40">
+                            class="flex items-center gap-2 justify-center px-4 py-2.5 rounded-xl text-white font-bold transition cursor-pointer text-sm bg-black/25 hover:bg-black/40">
                         <i data-lucide="download" style="width:15px;height:15px;"></i>
                         Descargar PDF
                     </button>
-                    <button id="toggle-pdf-btn"
-                            onclick="togglePdfViewer('${safeFilePath}')"
-                            class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white transition cursor-pointer font-mono text-sm bg-black/25 hover:bg-black/40">
-                        <i data-lucide="eye" style="width:15px;height:15px;"></i>
-                        Ver PDF
-                    </button>
+                    <div class="flex gap-2">
+                        <button id="toggle-pdf-btn"
+                                onclick="togglePdfViewer('${safeFilePath}')"
+                                class="flex-1 flex items-center gap-2 justify-center px-3 py-2 rounded-xl text-white transition cursor-pointer font-mono text-xs bg-black/25 hover:bg-black/40">
+                            <i data-lucide="eye" style="width:13px;height:13px;"></i>
+                            Ver PDF
+                        </button>
+                        <button id="toggle-index-btn"
+                                onclick="toggleBookIndex('${safeFilePath}')"
+                                class="flex-1 flex items-center gap-2 justify-center px-3 py-2 rounded-xl text-white transition cursor-pointer font-mono text-xs bg-black/25 hover:bg-black/40">
+                            <i data-lucide="list" style="width:13px;height:13px;"></i>
+                            Índice
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
