@@ -47,16 +47,16 @@ function htmlBookDetailPage(book) {
     return `
     <div class="py-6 px-4">
 
-        <!-- Island: single row, cover full-height left, info right -->
-        <div class="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-gray-800 shadow-2xl flex">
+        <!-- Island: entire bg is book color -->
+        <div class="${palette.bg} max-w-2xl mx-auto rounded-2xl border border-gray-800 shadow-2xl flex">
 
-            <!-- Cover — full height, rounded like cards -->
+            <!-- Cover — rounded like cards, margin shows color behind -->
             <img src="${book.url_image_front_cover}"
                  class="object-cover flex-shrink-0 rounded-2xl m-2 shadow-lg"
                  style="width:150px;" />
 
-            <!-- Info: colored bg, full flex column -->
-            <div class="${palette.bg} flex-1 flex flex-col gap-3 p-5">
+            <!-- Info: inherits bg, full flex column -->
+            <div class="flex-1 flex flex-col gap-3 p-5">
 
                 <h1 class="font-mono text-white text-lg font-bold leading-snug">${book.title}</h1>
 
