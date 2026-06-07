@@ -123,44 +123,59 @@ function loadFooter() {
     body.insertAdjacentHTML("beforeend", htmlFooterComponent());
 }
 
-function getChunks(query, size = 3) {
-    const q = query.trim();
-    if (q.length <= size) return [q];
-    const chunks = [];
-    for (let i = 0; i <= q.length - size; i++) {
-        chunks.push(q.slice(i, i + size));
-    }
-    return [...new Set(chunks)];
+function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+            dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]
+                : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+    return dp[m][n];
+}
+
+function getTolerance(len) {
+    if (len <= 3) return 0;
+    if (len <= 5) return 1;
+    return 2;
+}
+
+var ALL_BOOKS = null;
+
+async function getAllBooks() {
+    if (ALL_BOOKS) return ALL_BOOKS;
+    const { data } = await supabase.from("db_dataleake").select("*");
+    ALL_BOOKS = data || [];
+    ALL_BOOKS.forEach(cacheBook);
+    return ALL_BOOKS;
 }
 
 async function searchBooks(query) {
-    const trimmed = query.trim();
+    const trimmed = query.trim().toLowerCase();
     if (!trimmed) return [];
 
-    // Split query into words, get trigrams per word, flatten
-    const words = trimmed.split(/\s+/);
-    const chunks = [...new Set(words.flatMap(w => getChunks(w, 3)))];
+    const queryWords = trimmed.split(/\s+/).filter(w => w.length > 0);
+    const books = await getAllBooks();
 
-    const orFilter = chunks.map(c => `title.ilike.%${c}%`).join(",");
-
-    const { data, error } = await supabase
-        .from("db_dataleake")
-        .select("*")
-        .or(orFilter);
-
-    if (error) {
-        console.error("Error en búsqueda", error);
-        return [];
-    }
-
-    // Score by how many chunks match the title, sort best match first
-    const books = data || [];
     return books
         .map(book => {
-            const title = book.title.toLowerCase();
-            const score = chunks.filter(c => title.includes(c.toLowerCase())).length;
-            return { ...book, _score: score };
+            const titleWords = book.title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, " ")
+                .split(/\s+/)
+                .filter(w => w.length > 0);
+
+            let totalScore = 0;
+            for (const qWord of queryWords) {
+                const maxDist = getTolerance(qWord.length);
+                const bestDist = Math.min(...titleWords.map(t => levenshtein(qWord, t)));
+                if (bestDist > maxDist) { totalScore = 0; break; }
+                totalScore += qWord.length - bestDist;
+            }
+
+            return { ...book, _score: totalScore };
         })
+        .filter(b => b._score > 0)
         .sort((a, b) => b._score - a._score);
 }
 
