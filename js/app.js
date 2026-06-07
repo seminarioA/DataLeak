@@ -9,28 +9,17 @@ function loadNavbar() {
 }
 
 async function downloadBook(filePath) {
-    const response = await fetch(
-        "https://buykkihkvljctcahbsjq.supabase.co/functions/v1/get-pdf-signed-url",
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ file_path: filePath }),
-        }
-    );
+    const { data, error } = await supabase.storage
+        .from("dataleake")
+        .createSignedUrl(filePath, 3600);
 
-    if (!response.ok) {
-        console.error("Signed URL request failed", await response.text());
+    if (error || !data?.signedUrl) {
+        console.error("Error generando URL firmada", error);
+        alert("No se pudo descargar el archivo. Intenta nuevamente.");
         return;
     }
 
-    const { signedUrl } = await response.json();
-
-    if (!signedUrl) {
-        console.error("Signed URL missing in response");
-        return;
-    }
-
-    window.open(signedUrl, "_blank");
+    window.open(data.signedUrl, "_blank");
 }
 
 var COLORS = {
@@ -110,7 +99,84 @@ function loadFooter() {
     body.insertAdjacentHTML("beforeend", htmlFooterComponent());
 }
 
+async function searchBooks(query) {
+    const { data, error } = await supabase
+        .from("db_dataleake")
+        .select("*")
+        .ilike("title", `%${query}%`);
+
+    if (error) {
+        console.error("Error en búsqueda", error);
+        return [];
+    }
+    return data || [];
+}
+
+function renderSearchResults(books, query) {
+    const root = document.getElementById("search-results-root");
+    const categoriesRoot = document.getElementById("categories-root");
+
+    if (!query.trim()) {
+        root.style.display = "none";
+        root.innerHTML = "";
+        if (categoriesRoot) categoriesRoot.style.display = "";
+        return;
+    }
+
+    if (categoriesRoot) categoriesRoot.style.display = "none";
+    root.style.display = "";
+
+    if (books.length === 0) {
+        root.innerHTML = `
+            <section class="m-5">
+                <h2 class="font-mono text-white text-2xl mb-4">Resultados para "${query}"</h2>
+                <p class="text-gray-400 font-mono">No se encontraron libros.</p>
+            </section>`;
+        return;
+    }
+
+    const cards = books.map(book =>
+        htmlCardComponent(
+            COLORS[book.color] || "bg-gray",
+            book.url_image_front_cover,
+            book.url_image_back_cover,
+            book.title,
+            book.author,
+            book.file_path
+        )
+    ).join("");
+
+    root.innerHTML = `
+        <section class="m-5">
+            <h2 class="font-mono text-white text-2xl mb-4">Resultados para "${query}"</h2>
+            <div class="snap-x flex bg-gray-950 py-5 gap-5"
+                style="overflow-x: auto; scrollbar-color: #364153 #101828; padding-bottom: 1rem;">
+                ${cards}
+            </div>
+        </section>`;
+}
+
+function initSearch() {
+    const input = document.getElementById("search-input");
+    if (!input) return;
+
+    let debounceTimer;
+    input.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        const query = input.value;
+        debounceTimer = setTimeout(async () => {
+            if (!query.trim()) {
+                renderSearchResults([], query);
+                return;
+            }
+            const books = await searchBooks(query);
+            renderSearchResults(books, query);
+        }, 300);
+    });
+}
+
 loadHeader();
 loadNavbar();
 initDynamicCategories();
 loadFooter();
+initSearch();
