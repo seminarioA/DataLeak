@@ -7,10 +7,9 @@ function htmlHeaderComponent(){
                 id="search-input"
                 type="text"
                 placeholder="Buscar libro o autor..."
-                class="w-full max-w-2xl px-4 py-2 rounded-xl bg-gray-800 text-white placeholder-gray-400 border border-gray-700 focus:outline-none focus:border-blue-500 transition"
+                class="w-full max-w-2xl px-4 py-2 rounded-xl bg-gray-900 text-white placeholder-gray-500 border border-gray-700 focus:outline-none focus:border-blue-400 focus:ring-0 transition"
             />
         </div>
-        <div id="search-results-root" style="display:none;"></div>
         `;
     return header;
 }

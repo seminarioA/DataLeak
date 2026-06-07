@@ -19,7 +19,7 @@ function htmlNavbarComponent(categories) {
         .join("");
 
     let navbar = `
-        <nav class="flex flex-wrap gap-1 justify-center">
+        <nav id="main-navbar" class="flex flex-wrap gap-1 justify-center">
             ${links}
         </nav>`;
 

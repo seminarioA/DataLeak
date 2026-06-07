@@ -77,6 +77,7 @@ async function loadAllCategories() {
 async function initDynamicCategories() {
     const body = document.querySelector("body");
 
+    body.insertAdjacentHTML("beforeend", '<div id="search-results-root" style="display:none;"></div>');
     body.insertAdjacentHTML("beforeend", '<div id="categories-root"></div>');
 
     const categories = await loadAllCategories();
@@ -115,15 +116,18 @@ async function searchBooks(query) {
 function renderSearchResults(books, query) {
     const root = document.getElementById("search-results-root");
     const categoriesRoot = document.getElementById("categories-root");
+    const navbar = document.getElementById("main-navbar");
 
     if (!query.trim()) {
         root.style.display = "none";
         root.innerHTML = "";
         if (categoriesRoot) categoriesRoot.style.display = "";
+        if (navbar) navbar.style.display = "";
         return;
     }
 
     if (categoriesRoot) categoriesRoot.style.display = "none";
+    if (navbar) navbar.style.display = "none";
     root.style.display = "";
 
     if (books.length === 0) {
