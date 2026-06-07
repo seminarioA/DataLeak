@@ -47,18 +47,12 @@ function htmlBookDetailPage(book) {
     return `
     <div class="py-6 px-4">
 
-        <button onclick="navigateBack()"
-                class="flex items-center gap-2 text-gray-400 hover:text-white transition font-mono text-sm mb-6 ml-2">
-            <i data-lucide="arrow-left" style="width:15px;height:15px;"></i>
-            Volver
-        </button>
-
         <!-- Island: single row, cover full-height left, info right -->
         <div class="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-gray-800 shadow-2xl flex">
 
-            <!-- Cover — stretches to full island height -->
+            <!-- Cover — full height, rounded like cards -->
             <img src="${book.url_image_front_cover}"
-                 class="object-cover flex-shrink-0"
+                 class="object-cover flex-shrink-0 rounded-2xl m-2 shadow-lg"
                  style="width:150px;" />
 
             <!-- Info: colored bg, full flex column -->
