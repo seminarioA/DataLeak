@@ -25,7 +25,8 @@ async function downloadBook(filePath) {
 
 // ── PDF Viewer ────────────────────────────────────────────────────────────────
 
-var _pdfBlobUrl = null;
+var _pdfBlobUrl     = null;
+var _currentFilePath = null;   // set when a detail page is rendered
 
 const PDF_SPINNER = `
     <div class="rounded-2xl border border-gray-800 bg-gray-900 flex flex-col items-center justify-center gap-3 py-16">
@@ -77,6 +78,50 @@ async function togglePdfViewer(filePath) {
     }
 }
 
+async function goToPdfPage(page) {
+    if (!page || !_currentFilePath) return;
+
+    const section = document.getElementById("pdf-viewer-section");
+    const btn     = document.getElementById("toggle-pdf-btn");
+    if (!section) return;
+
+    // Helper: render iframe at a specific page
+    function mountIframe(blobUrl, p) {
+        section.style.display = "";
+        section.innerHTML = `
+            <div class="rounded-2xl overflow-hidden border border-gray-800 shadow-xl">
+                <iframe src="${blobUrl}#page=${p}&toolbar=1"
+                        style="width:100%;height:80vh;border:none;display:block;"></iframe>
+            </div>`;
+        if (btn) { btn.innerHTML = '<i data-lucide="eye-off" style="width:13px;height:13px;"></i> Cerrar'; lucide.createIcons(); }
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // Blob already loaded — just swap the iframe src
+    if (_pdfBlobUrl) {
+        mountIframe(_pdfBlobUrl, page);
+        return;
+    }
+
+    // Need to load blob first
+    section.style.display = "";
+    section.innerHTML = PDF_SPINNER;
+    if (btn) { btn.innerHTML = '<i data-lucide="eye-off" style="width:13px;height:13px;"></i> Cerrar'; lucide.createIcons(); }
+
+    const { data, error } = await supabase.storage
+        .from("dataleake").createSignedUrl(_currentFilePath, 3600);
+    if (error || !data?.signedUrl) { section.innerHTML = ""; return; }
+
+    try {
+        const resp = await fetch(data.signedUrl);
+        if (!resp.ok) throw new Error(resp.status);
+        _pdfBlobUrl = URL.createObjectURL(await resp.blob());
+        mountIframe(_pdfBlobUrl, page);
+    } catch (e) {
+        section.innerHTML = `<div class="rounded-2xl border border-gray-800 bg-gray-900 flex items-center justify-center py-12 text-red-400 font-mono text-sm">Error al cargar el PDF.</div>`;
+    }
+}
+
 // ── Book index (PDF outline) ──────────────────────────────────────────────────
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -85,16 +130,22 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 function renderOutlineItems(items, depth) {
     if (!items || items.length === 0) return "";
     return items.map(item => {
-        const indent   = depth * 14;
-        const textSize = depth === 0 ? "text-sm font-semibold text-gray-200" : "text-xs text-gray-400";
-        const bullet   = depth > 0 ? '<span class="text-gray-600 mr-1.5 select-none">›</span>' : "";
-        const pageNum  = item.page
-            ? `<span class="text-gray-600 font-mono text-xs flex-shrink-0 ml-2">${item.page}</span>` : "";
-        const subs     = depth < 2 ? renderOutlineItems(item.items, depth + 1) : "";
+        const indent     = depth * 14;
+        const textBase   = depth === 0 ? "text-sm font-semibold" : "text-xs";
+        const clickable  = item.page != null;
+        const colorClass = clickable
+            ? (depth === 0 ? "text-gray-200 hover:text-white cursor-pointer" : "text-gray-400 hover:text-gray-200 cursor-pointer")
+            : (depth === 0 ? "text-gray-200" : "text-gray-400");
+        const onclick    = clickable ? `onclick="goToPdfPage(${item.page})"` : "";
+        const bullet     = depth > 0 ? '<span class="text-gray-600 mr-1.5 select-none">›</span>' : "";
+        const pageSpan   = item.page != null
+            ? `<span class="text-gray-600 font-mono text-xs flex-shrink-0 ml-2 select-none">${item.page}</span>` : "";
+        const subs       = depth < 2 ? renderOutlineItems(item.items, depth + 1) : "";
         return `
-            <div style="padding-left:${indent}px" class="flex items-baseline gap-1 py-0.5 leading-snug">
-                <span class="${textSize} flex-1 truncate">${bullet}${item.title}</span>
-                ${pageNum}
+            <div style="padding-left:${indent}px" ${onclick}
+                 class="flex items-baseline gap-1 py-0.5 leading-snug rounded transition-colors ${clickable ? "hover:bg-white/5 -mx-1 px-1" : ""}">
+                <span class="${textBase} ${colorClass} flex-1 truncate">${bullet}${item.title}</span>
+                ${pageSpan}
             </div>${subs}`;
     }).join("");
 }
@@ -325,6 +376,8 @@ function showBookPage(bookId) {
 function renderBookPage(book) {
     const pageDetail = document.getElementById("page-detail");
     const pageMain   = document.getElementById("page-main");
+    _currentFilePath = book.file_path;
+    _pdfBlobUrl      = null;          // reset blob when changing books
     pageDetail.innerHTML = htmlBookDetailPage(book);
     pageMain.style.display   = "none";
     pageDetail.style.display = "";
