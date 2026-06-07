@@ -88,57 +88,58 @@ function renderOutlineItems(items, depth) {
         const indent   = depth * 14;
         const textSize = depth === 0 ? "text-sm font-semibold text-gray-200" : "text-xs text-gray-400";
         const bullet   = depth > 0 ? '<span class="text-gray-600 mr-1.5 select-none">›</span>' : "";
+        const pageNum  = item.page
+            ? `<span class="text-gray-600 font-mono text-xs flex-shrink-0 ml-2">${item.page}</span>` : "";
         const subs     = depth < 2 ? renderOutlineItems(item.items, depth + 1) : "";
         return `
-            <div style="padding-left:${indent}px" class="py-0.5 leading-snug ${textSize} truncate">
-                ${bullet}${item.title}
+            <div style="padding-left:${indent}px" class="flex items-baseline gap-1 py-0.5 leading-snug">
+                <span class="${textSize} flex-1 truncate">${bullet}${item.title}</span>
+                ${pageNum}
             </div>${subs}`;
     }).join("");
 }
 
-async function loadBookIndex(filePath) {
-    const section = document.getElementById("book-index-section");
-    if (!section) return;
-
-    section.innerHTML = `
-        <div class="flex items-center justify-center gap-2 text-gray-500 font-mono text-xs py-4">
-            <svg class="animate-spin" style="width:14px;height:14px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Extrayendo índice...
-        </div>`;
-
-    const { data, error } = await supabase.storage
-        .from("dataleake").createSignedUrl(filePath, 3600);
-    if (error || !data?.signedUrl) { section.innerHTML = ""; return; }
-
-    try {
-        const pdf     = await pdfjsLib.getDocument({ url: data.signedUrl, rangeChunkSize: 65536, disableAutoFetch: true }).promise;
-        const outline = await pdf.getOutline();
-
-        if (!outline || outline.length === 0) {
-            section.innerHTML = `<p class="text-gray-600 font-mono text-xs text-center py-4">Este PDF no tiene índice de contenidos.</p>`;
-            return;
-        }
-
-        section.innerHTML = `
-            <div class="max-w-2xl mx-auto">
-                <div class="flex items-center gap-2 px-1 pb-3 mb-1 border-b border-gray-800">
-                    <i data-lucide="list" style="width:13px;height:13px;" class="text-gray-500"></i>
-                    <span class="font-mono text-sm text-gray-400 font-semibold">Índice de contenidos</span>
-                    <span class="ml-auto text-xs text-gray-600 font-mono">${outline.length} secciones</span>
-                </div>
-                <div class="px-1 py-2 font-mono overflow-y-auto" style="max-height:300px;scrollbar-color:#364153 transparent;">
-                    ${renderOutlineItems(outline, 0)}
-                </div>
-            </div>`;
-        lucide.createIcons();
-    } catch (e) {
-        console.error("Outline extraction error", e);
-        section.innerHTML = "";
-    }
+async function extractOutlineWithPages(pdf, items, depth) {
+    if (!items || items.length === 0 || depth > 3) return [];
+    return Promise.all(items.map(async item => {
+        let page = null;
+        try {
+            let dest = item.dest;
+            if (typeof dest === "string") dest = await pdf.getDestination(dest);
+            if (dest && dest[0]) page = (await pdf.getPageIndex(dest[0])) + 1;
+        } catch (_) {}
+        return {
+            title: item.title,
+            page,
+            items: await extractOutlineWithPages(pdf, item.items, depth + 1),
+        };
+    }));
 }
+
+function renderTocSection(section, toc) {
+    const total = toc.length;
+    section.innerHTML = `
+        <div class="max-w-2xl mx-auto">
+            <div class="flex items-center gap-2 px-1 pb-3 mb-1 border-b border-gray-800">
+                <i data-lucide="list" style="width:13px;height:13px;" class="text-gray-500"></i>
+                <span class="font-mono text-sm text-gray-400 font-semibold">Índice de contenidos</span>
+                <span class="ml-auto text-xs text-gray-600 font-mono">${total} secciones</span>
+            </div>
+            <div class="px-1 py-2 font-mono overflow-y-auto" style="max-height:320px;scrollbar-color:#364153 transparent;">
+                ${renderOutlineItems(toc, 0)}
+            </div>
+        </div>`;
+    lucide.createIcons();
+}
+
+const INDEX_SPINNER = `
+    <div class="flex items-center justify-center gap-2 text-gray-500 font-mono text-xs py-4">
+        <svg class="animate-spin" style="width:14px;height:14px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Cargando índice...
+    </div>`;
 
 async function toggleBookIndex(filePath) {
     const section = document.getElementById("book-index-section");
@@ -153,7 +154,48 @@ async function toggleBookIndex(filePath) {
 
     section.style.display = "";
     if (btn) { btn.innerHTML = '<i data-lucide="list-x" style="width:13px;height:13px;"></i> Cerrar'; lucide.createIcons(); }
-    await loadBookIndex(filePath);
+    section.innerHTML = INDEX_SPINNER;
+
+    const book = BOOKS_CACHE[filePath];
+    if (!book) return;
+
+    // 1 — Check Supabase cache first
+    const { data: cached } = await supabase
+        .from("book_toc").select("toc").eq("book_id", book.id).maybeSingle();
+
+    if (cached?.toc) {
+        renderTocSection(section, cached.toc);
+        return;
+    }
+
+    // 2 — Extract from PDF with page numbers
+    section.innerHTML = INDEX_SPINNER.replace("Cargando índice...", "Extrayendo índice (primera vez)...");
+
+    const { data: urlData, error } = await supabase.storage
+        .from("dataleake").createSignedUrl(filePath, 3600);
+    if (error || !urlData?.signedUrl) { section.innerHTML = ""; return; }
+
+    try {
+        const pdf     = await pdfjsLib.getDocument({ url: urlData.signedUrl, rangeChunkSize: 65536, disableAutoFetch: true }).promise;
+        const raw     = await pdf.getOutline();
+
+        if (!raw || raw.length === 0) {
+            section.innerHTML = `<p class="text-gray-600 font-mono text-xs text-center py-4">Este PDF no tiene índice de contenidos.</p>`;
+            return;
+        }
+
+        const toc = await extractOutlineWithPages(pdf, raw, 0);
+
+        // 3 — Persist to Supabase (upsert)
+        supabase.from("book_toc")
+            .upsert({ book_id: book.id, toc, extracted_at: new Date().toISOString() })
+            .then(({ error: e }) => { if (e) console.warn("TOC save error", e); });
+
+        renderTocSection(section, toc);
+    } catch (e) {
+        console.error("TOC extraction error", e);
+        section.innerHTML = "";
+    }
 }
 
 // ── Event tracking ────────────────────────────────────────────────────────────
@@ -206,7 +248,7 @@ async function loadRecommendations() {
 
         books.sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
         books.forEach(cacheBook);
-        renderRecommendationSection(root, books, "Tendencias", "trending-up");
+        renderRecommendationSection(root, books, "Tendencias");
 
     } catch (_) {
         showNewestBooks(root);
@@ -221,10 +263,10 @@ async function showNewestBooks(root) {
 
     if (!books || books.length === 0) return;
     books.forEach(cacheBook);
-    renderRecommendationSection(root, books, "Novedades", "sparkles");
+    renderRecommendationSection(root, books, "Novedades");
 }
 
-function renderRecommendationSection(root, books, title, icon) {
+function renderRecommendationSection(root, books, title) {
     const cards = books.map(b =>
         htmlCardComponent(COLORS[b.color] || "bg-gray", b.url_image_front_cover, b.url_image_back_cover, b.title, b.author, b.file_path, b.id)
     ).join("");
@@ -232,8 +274,7 @@ function renderRecommendationSection(root, books, title, icon) {
     root.innerHTML = `
         <hr class="m-5 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
         <section class="m-5">
-            <h2 class="font-mono text-white text-2xl flex items-center gap-2 mb-0">
-                <i data-lucide="${icon}" style="width:20px;height:20px;"></i>
+            <h2 class="font-mono text-white text-2xl">
                 ${title}
             </h2>
             <div class="snap-x flex bg-gray-950 py-5 gap-5"
@@ -241,7 +282,6 @@ function renderRecommendationSection(root, books, title, icon) {
                 ${cards}
             </div>
         </section>`;
-    lucide.createIcons();
 }
 
 // ── App colors ────────────────────────────────────────────────────────────────
