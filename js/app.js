@@ -22,6 +22,28 @@ async function downloadBook(filePath) {
     window.open(data.signedUrl, "_blank");
 }
 
+var BOOKS_CACHE = {};
+
+function cacheBook(book) {
+    BOOKS_CACHE[book.file_path] = book;
+}
+
+function showBookDetail(filePath) {
+    const book = BOOKS_CACHE[filePath];
+    if (!book) return;
+    const existing = document.getElementById("book-detail-overlay");
+    if (existing) existing.remove();
+    document.body.insertAdjacentHTML("beforeend", htmlBookDetailComponent(book));
+    lucide.createIcons();
+    document.body.style.overflow = "hidden";
+}
+
+function closeBookDetail() {
+    const overlay = document.getElementById("book-detail-overlay");
+    if (overlay) overlay.remove();
+    document.body.style.overflow = "";
+}
+
 var COLORS = {
     gray: "bg-gray",
     red: "bg-red",
@@ -46,6 +68,7 @@ async function loadCategory(categoryName, containerId) {
         .contains("category", [categoryName]);
 
     for (const book of data) {
+        cacheBook(book);
         const card = htmlCardComponent(
             COLORS[book.color],
             book.url_image_front_cover,
@@ -165,16 +188,17 @@ function renderSearchResults(books, query) {
         return;
     }
 
-    const cards = books.map(book =>
-        htmlCardComponent(
+    const cards = books.map(book => {
+        cacheBook(book);
+        return htmlCardComponent(
             COLORS[book.color] || "bg-gray",
             book.url_image_front_cover,
             book.url_image_back_cover,
             book.title,
             book.author,
             book.file_path
-        )
-    ).join("");
+        );
+    }).join("");
 
     root.innerHTML = `
         <section class="m-5">
