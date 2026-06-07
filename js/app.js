@@ -263,7 +263,7 @@ async function showNewestBooks(root) {
 
     if (!books || books.length === 0) return;
     books.forEach(cacheBook);
-    renderRecommendationSection(root, books, "Novedades");
+    renderRecommendationSection(root, books, "Nuevo");
 }
 
 function renderRecommendationSection(root, books, title) {
