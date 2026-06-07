@@ -116,6 +116,7 @@ function renderBookPage(book) {
     pageDetail.style.display = "";
     window.scrollTo(0, 0);
     lucide.createIcons();
+    loadBookIndex(book.file_path);
 }
 
 function showMainPage() {
@@ -313,6 +314,72 @@ function initSearch() {
             renderSearchResults(books, query);
         }, 300);
     });
+}
+
+// ── Book index (PDF outline) ──────────────────────────────────────────────────
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+function renderOutlineItems(items, depth) {
+    if (!items || items.length === 0) return "";
+    return items.map(item => {
+        const indent   = depth * 14;
+        const textSize = depth === 0 ? "text-sm font-semibold text-gray-200" : "text-xs text-gray-400";
+        const bullet   = depth > 0 ? '<span class="text-gray-600 mr-1.5 select-none">›</span>' : "";
+        const subs     = depth < 2 ? renderOutlineItems(item.items, depth + 1) : "";
+        return `
+            <div style="padding-left:${indent}px" class="py-0.5 leading-snug ${textSize} truncate">
+                ${bullet}${item.title}
+            </div>
+            ${subs}`;
+    }).join("");
+}
+
+async function loadBookIndex(filePath) {
+    const section = document.getElementById("book-index-section");
+    if (!section) return;
+
+    section.innerHTML = `
+        <div class="flex items-center gap-2 text-gray-500 font-mono text-xs py-4 justify-center">
+            <svg class="animate-spin" style="width:14px;height:14px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Extrayendo índice...
+        </div>`;
+
+    const { data, error } = await supabase.storage
+        .from("dataleake")
+        .createSignedUrl(filePath, 3600);
+
+    if (error || !data?.signedUrl) { section.innerHTML = ""; return; }
+
+    try {
+        const pdf     = await pdfjsLib.getDocument({ url: data.signedUrl, rangeChunkSize: 65536, disableAutoFetch: true }).promise;
+        const outline = await pdf.getOutline();
+
+        if (!outline || outline.length === 0) {
+            section.innerHTML = `<p class="text-gray-600 font-mono text-xs text-center py-4">Este PDF no tiene índice de contenidos.</p>`;
+            return;
+        }
+
+        section.innerHTML = `
+            <div class="max-w-2xl mx-auto rounded-2xl border border-gray-800 bg-gray-900 shadow-xl overflow-hidden">
+                <div class="flex items-center gap-2 px-5 py-3 border-b border-gray-800">
+                    <i data-lucide="list" style="width:14px;height:14px;" class="text-gray-400"></i>
+                    <span class="font-mono text-sm text-gray-300 font-semibold">Índice de contenidos</span>
+                    <span class="ml-auto text-xs text-gray-600 font-mono">${outline.length} secciones</span>
+                </div>
+                <div class="px-5 py-3 font-mono overflow-y-auto" style="max-height:320px;">
+                    ${renderOutlineItems(outline, 0)}
+                </div>
+            </div>`;
+        lucide.createIcons();
+    } catch (e) {
+        console.error("Outline extraction error", e);
+        section.innerHTML = "";
+    }
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────

@@ -89,5 +89,8 @@ function htmlBookDetailPage(book) {
 
         <!-- PDF Viewer -->
         <div id="pdf-viewer-section" class="max-w-2xl mx-auto mt-4" style="display:none;"></div>
+
+        <!-- Book index extracted from PDF outline -->
+        <div id="book-index-section" class="max-w-2xl mx-auto mt-4"></div>
     </div>`;
 }
