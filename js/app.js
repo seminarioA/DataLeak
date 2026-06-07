@@ -150,12 +150,10 @@ function renderSearchResults(books, query) {
         root.style.display = "none";
         root.innerHTML = "";
         if (categoriesRoot) categoriesRoot.style.display = "";
-        if (navbar) navbar.style.display = "";
         return;
     }
 
     if (categoriesRoot) categoriesRoot.style.display = "none";
-    if (navbar) navbar.style.display = "none";
     root.style.display = "";
 
     if (books.length === 0) {
@@ -208,6 +206,7 @@ function initSearch() {
 }
 
 loadHeader();
+lucide.createIcons();
 loadNavbar();
 initDynamicCategories();
 loadFooter();
