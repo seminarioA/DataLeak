@@ -1,6 +1,6 @@
-function htmlCardComponent(bg_color, url_image_front, url_image_back, book_title, authors_book, book_file_path) {
+function htmlCardComponent(bg_color, url_image_front, url_image_back, book_title, authors_book, book_file_path, book_id) {
     let component = `
-    <a href="javascript:showBookDetail('${book_file_path}');">
+    <a href="#/book/${book_id}">
         <div
             class="max-w-60 min-w-60 min-h-102.5 rounded-3xl ${bg_color}-700 transition duration-75 hover:scale-102 hover:${bg_color}-800 h-full">
             <img class="w-full h-80 rounded-3xl p-1.5" src="${url_image_front}"/>

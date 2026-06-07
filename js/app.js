@@ -1,11 +1,11 @@
 function loadHeader() {
-    const body = document.querySelector("body");
-    body.insertAdjacentHTML("afterbegin", htmlHeaderComponent());
+    const root = document.getElementById("page-main");
+    root.insertAdjacentHTML("beforeend", htmlHeaderComponent());
 }
 
 function loadNavbar() {
-    const body = document.querySelector("body");
-    body.insertAdjacentHTML("beforeend", htmlNavbarComponent(NAVBAR_CATEGORIES));
+    const root = document.getElementById("page-main");
+    root.insertAdjacentHTML("beforeend", htmlNavbarComponent(NAVBAR_CATEGORIES));
 }
 
 async function downloadBook(filePath) {
@@ -22,42 +22,70 @@ async function downloadBook(filePath) {
     window.open(data.signedUrl, "_blank");
 }
 
+var COLORS = {
+    gray:   "bg-gray",
+    red:    "bg-red",
+    blue:   "bg-blue",
+    green:  "bg-green",
+    orange: "bg-orange",
+    amber:  "bg-amber",
+    yellow: "bg-yellow",
+    purple: "bg-purple",
+    teal:   "bg-teal",
+    cyan:   "bg-cyan",
+    sky:    "bg-sky",
+};
+
 var BOOKS_CACHE = {};
 
 function cacheBook(book) {
     BOOKS_CACHE[book.file_path] = book;
 }
 
-function showBookDetail(filePath) {
-    const book = BOOKS_CACHE[filePath];
-    if (!book) return;
-    const existing = document.getElementById("book-detail-overlay");
-    if (existing) existing.remove();
-    document.body.insertAdjacentHTML("beforeend", htmlBookDetailComponent(book));
+// ── Router ────────────────────────────────────────────────────────────────────
+
+function showBookPage(bookId) {
+    const numId = parseInt(bookId);
+    const cached = Object.values(BOOKS_CACHE).find(b => b.id === numId);
+
+    if (cached) {
+        renderBookPage(cached);
+    } else {
+        supabase.from("db_dataleake").select("*").eq("id", numId).single()
+            .then(({ data }) => {
+                if (data) { cacheBook(data); renderBookPage(data); }
+            });
+    }
+}
+
+function renderBookPage(book) {
+    const pageMain   = document.getElementById("page-main");
+    const pageDetail = document.getElementById("page-detail");
+    pageDetail.innerHTML = htmlBookDetailPage(book);
+    pageMain.style.display   = "none";
+    pageDetail.style.display = "";
+    window.scrollTo(0, 0);
     lucide.createIcons();
-    document.body.style.overflow = "hidden";
 }
 
-function closeBookDetail() {
-    const overlay = document.getElementById("book-detail-overlay");
-    if (overlay) overlay.remove();
-    document.body.style.overflow = "";
+function showMainPage() {
+    document.getElementById("page-main").style.display   = "";
+    document.getElementById("page-detail").style.display = "none";
 }
 
-var COLORS = {
-    gray: "bg-gray",
-    red: "bg-red",
-    blue: "bg-blue",
-    green: "bg-green",
-    orange: "bg-orange",
-    amber: "bg-amber",
-    yellow: "bg-yellow",
-    orange: "bg-orange",
-    purple: "bg-purple",
-    teal: "bg-teal",
-    cyan: "bg-cyan",
-    sky: "bg-sky",
-};
+function navigateBack() {
+    history.back();
+}
+
+function router() {
+    const match = window.location.hash.match(/^#\/book\/(\d+)$/);
+    if (match) showBookPage(match[1]);
+    else        showMainPage();
+}
+
+window.addEventListener("hashchange", router);
+
+// ── Category loading ───────────────────────────────────────────────────────────
 
 async function loadCategory(categoryName, containerId) {
     const container = document.getElementById(`${containerId}-list`);
@@ -67,6 +95,7 @@ async function loadCategory(categoryName, containerId) {
         .select("*")
         .contains("category", [categoryName]);
 
+    if (!data) return;
     for (const book of data) {
         cacheBook(book);
         const card = htmlCardComponent(
@@ -76,52 +105,41 @@ async function loadCategory(categoryName, containerId) {
             book.title,
             book.author,
             book.file_path,
+            book.id,
         );
         container.insertAdjacentHTML("beforeend", card);
     }
 }
 
 async function loadAllCategories() {
-    const { data, error } = await supabase
-        .from("db_dataleake")
-        .select("category");
-
+    const { data } = await supabase.from("db_dataleake").select("category");
     const categories = new Set();
-
-    for (const row of data) {
-        if (Array.isArray(row.category)) {
-            row.category.forEach(cat => categories.add(cat));
-        }
+    for (const row of data || []) {
+        if (Array.isArray(row.category)) row.category.forEach(c => categories.add(c));
     }
-
     return Array.from(categories);
 }
 
 async function initDynamicCategories() {
-    const body = document.querySelector("body");
-
-    body.insertAdjacentHTML("beforeend", '<div id="search-results-root" style="display:none;"></div>');
-    body.insertAdjacentHTML("beforeend", '<div id="categories-root"></div>');
+    const root = document.getElementById("page-main");
+    root.insertAdjacentHTML("beforeend", '<div id="search-results-root" style="display:none;"></div>');
+    root.insertAdjacentHTML("beforeend", '<div id="categories-root"></div>');
 
     const categories = await loadAllCategories();
-
-    const root = document.getElementById("categories-root");
+    const catRoot = document.getElementById("categories-root");
 
     for (const category of categories) {
         const containerId = `category-${category.toLowerCase().replace(/\s+/g, "_")}-catalog`;
-
-        const section = htmlSectionCategoryComponent(category, containerId);
-
-        root.insertAdjacentHTML("beforeend", section);
-
+        catRoot.insertAdjacentHTML("beforeend", htmlSectionCategoryComponent(category, containerId));
         loadCategory(category, containerId);
     }
 }
 
 function loadFooter() {
-    const body = document.querySelector("body");
-    body.insertAdjacentHTML("beforeend", htmlFooterComponent());
+    document.getElementById("page-main").insertAdjacentHTML("beforeend", htmlFooterComponent());
 }
+
+// ── Fuzzy search ──────────────────────────────────────────────────────────────
 
 function levenshtein(a, b) {
     const m = a.length, n = b.length;
@@ -172,7 +190,6 @@ async function searchBooks(query) {
                 if (bestDist > maxDist) { totalScore = 0; break; }
                 totalScore += qWord.length - bestDist;
             }
-
             return { ...book, _score: totalScore };
         })
         .filter(b => b._score > 0)
@@ -180,18 +197,17 @@ async function searchBooks(query) {
 }
 
 function renderSearchResults(books, query) {
-    const root = document.getElementById("search-results-root");
-    const categoriesRoot = document.getElementById("categories-root");
-    const navbar = document.getElementById("main-navbar");
+    const root        = document.getElementById("search-results-root");
+    const catRoot     = document.getElementById("categories-root");
 
     if (!query.trim()) {
         root.style.display = "none";
-        root.innerHTML = "";
-        if (categoriesRoot) categoriesRoot.style.display = "";
+        root.innerHTML     = "";
+        if (catRoot) catRoot.style.display = "";
         return;
     }
 
-    if (categoriesRoot) categoriesRoot.style.display = "none";
+    if (catRoot) catRoot.style.display = "none";
     root.style.display = "";
 
     if (books.length === 0) {
@@ -211,7 +227,8 @@ function renderSearchResults(books, query) {
             book.url_image_back_cover,
             book.title,
             book.author,
-            book.file_path
+            book.file_path,
+            book.id,
         );
     }).join("");
 
@@ -219,7 +236,7 @@ function renderSearchResults(books, query) {
         <section class="m-5">
             <h2 class="font-mono text-white text-2xl mb-4">Resultados para "${query}"</h2>
             <div class="snap-x flex bg-gray-950 py-5 gap-5"
-                style="overflow-x: auto; scrollbar-color: #364153 #101828; padding-bottom: 1rem;">
+                style="overflow-x:auto;scrollbar-color:#364153 #101828;padding-bottom:1rem;">
                 ${cards}
             </div>
         </section>`;
@@ -228,21 +245,19 @@ function renderSearchResults(books, query) {
 function initSearch() {
     const input = document.getElementById("search-input");
     if (!input) return;
-
     let debounceTimer;
     input.addEventListener("input", () => {
         clearTimeout(debounceTimer);
         const query = input.value;
         debounceTimer = setTimeout(async () => {
-            if (!query.trim()) {
-                renderSearchResults([], query);
-                return;
-            }
+            if (!query.trim()) { renderSearchResults([], query); return; }
             const books = await searchBooks(query);
             renderSearchResults(books, query);
         }, 300);
     });
 }
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
 
 loadHeader();
 lucide.createIcons();
@@ -250,3 +265,4 @@ loadNavbar();
 initDynamicCategories();
 loadFooter();
 initSearch();
+router();
