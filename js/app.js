@@ -28,14 +28,58 @@ async function downloadBook(filePath) {
 var _pdfBlobUrl     = null;
 var _currentFilePath = null;   // set when a detail page is rendered
 
-const PDF_SPINNER = `
-    <div class="rounded-2xl border border-gray-800 bg-gray-900 flex flex-col items-center justify-center gap-3 py-16">
+// Single shared spinner card — same border/bg as the surrounding info cards, reused by both the PDF and index loaders.
+function loadingCardHTML({ label, labelId, progressId }) {
+    return `
+    <div class="rounded-3xl border border-gray-800 bg-gray-900 flex flex-col items-center justify-center gap-3 py-16">
         <svg class="animate-spin text-gray-400" style="width:32px;height:32px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <span class="text-gray-400 font-mono text-sm">Cargando PDF...</span>
+        <span id="${labelId}" class="text-gray-400 font-mono text-sm">${label}</span>
+        ${progressId ? `
+        <div class="w-48 h-1.5 rounded-full bg-gray-800 overflow-hidden">
+            <div id="${progressId}" class="h-full bg-blue-500 transition-all duration-150" style="width:0%"></div>
+        </div>` : ""}
     </div>`;
+}
+
+function pdfSpinnerHTML() {
+    return loadingCardHTML({ label: "Cargando PDF...", labelId: "pdf-progress-label", progressId: "pdf-progress-fill" });
+}
+
+function setPdfProgress(pct) {
+    const fill  = document.getElementById("pdf-progress-fill");
+    const label = document.getElementById("pdf-progress-label");
+    if (fill)  fill.style.width = pct + "%";
+    if (label) label.textContent = pct != null ? `Cargando PDF... ${pct}%` : "Cargando PDF...";
+}
+
+// Streams the response body so we can compute a real percentage from bytes-read / Content-Length.
+async function fetchBlobWithProgress(url, onProgress) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(response.status);
+
+    const total = parseInt(response.headers.get("Content-Length") || "0", 10);
+    if (!total || !response.body) {
+        onProgress(null);
+        return response.blob();
+    }
+
+    const reader = response.body.getReader();
+    const chunks = [];
+    let loaded = 0;
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        loaded += value.length;
+        onProgress(Math.min(100, Math.round((loaded / total) * 100)));
+    }
+
+    return new Blob(chunks, { type: response.headers.get("Content-Type") || "application/pdf" });
+}
 
 async function togglePdfViewer(filePath) {
     const section = document.getElementById("pdf-viewer-section");
@@ -51,7 +95,7 @@ async function togglePdfViewer(filePath) {
     }
 
     section.style.display = "";
-    section.innerHTML = PDF_SPINNER;
+    section.innerHTML = pdfSpinnerHTML();
     if (btn) { btn.innerHTML = '<i data-lucide="eye-off" style="width:13px;height:13px;"></i> Cerrar'; lucide.createIcons(); }
 
     const { data, error } = await supabase.storage
@@ -59,22 +103,20 @@ async function togglePdfViewer(filePath) {
         .createSignedUrl(filePath, 3600);
 
     if (error || !data?.signedUrl) {
-        section.innerHTML = `<div class="rounded-2xl border border-gray-800 bg-gray-900 flex items-center justify-center py-12 text-red-400 font-mono text-sm">No se pudo obtener el archivo.</div>`;
+        section.innerHTML = `<div class="rounded-3xl border border-gray-800 bg-gray-900 flex items-center justify-center py-12 text-red-400 font-mono text-sm">No se pudo obtener el archivo.</div>`;
         return;
     }
 
     try {
-        const response = await fetch(data.signedUrl);
-        if (!response.ok) throw new Error(response.status);
-        const blob = await response.blob();
+        const blob = await fetchBlobWithProgress(data.signedUrl, setPdfProgress);
         _pdfBlobUrl = URL.createObjectURL(blob);
         section.innerHTML = `
-            <div class="rounded-2xl overflow-hidden border border-gray-800 shadow-xl">
+            <div class="rounded-3xl overflow-hidden border border-gray-800 shadow-xl">
                 <iframe src="${_pdfBlobUrl}#toolbar=1" style="width:100%;height:80vh;border:none;display:block;"></iframe>
             </div>`;
     } catch (e) {
         console.error("PDF load error", e);
-        section.innerHTML = `<div class="rounded-2xl border border-gray-800 bg-gray-900 flex items-center justify-center py-12 text-red-400 font-mono text-sm">Error al cargar el PDF.</div>`;
+        section.innerHTML = `<div class="rounded-3xl border border-gray-800 bg-gray-900 flex items-center justify-center py-12 text-red-400 font-mono text-sm">Error al cargar el PDF.</div>`;
     }
 }
 
@@ -89,7 +131,7 @@ async function goToPdfPage(page) {
     function mountIframe(blobUrl, p) {
         section.style.display = "";
         section.innerHTML = `
-            <div class="rounded-2xl overflow-hidden border border-gray-800 shadow-xl">
+            <div class="rounded-3xl overflow-hidden border border-gray-800 shadow-xl">
                 <iframe src="${blobUrl}#page=${p}&toolbar=1"
                         style="width:100%;height:80vh;border:none;display:block;"></iframe>
             </div>`;
@@ -105,7 +147,7 @@ async function goToPdfPage(page) {
 
     // Need to load blob first
     section.style.display = "";
-    section.innerHTML = PDF_SPINNER;
+    section.innerHTML = pdfSpinnerHTML();
     if (btn) { btn.innerHTML = '<i data-lucide="eye-off" style="width:13px;height:13px;"></i> Cerrar'; lucide.createIcons(); }
 
     const { data, error } = await supabase.storage
@@ -113,12 +155,11 @@ async function goToPdfPage(page) {
     if (error || !data?.signedUrl) { section.innerHTML = ""; return; }
 
     try {
-        const resp = await fetch(data.signedUrl);
-        if (!resp.ok) throw new Error(resp.status);
-        _pdfBlobUrl = URL.createObjectURL(await resp.blob());
+        const blob = await fetchBlobWithProgress(data.signedUrl, setPdfProgress);
+        _pdfBlobUrl = URL.createObjectURL(blob);
         mountIframe(_pdfBlobUrl, page);
     } catch (e) {
-        section.innerHTML = `<div class="rounded-2xl border border-gray-800 bg-gray-900 flex items-center justify-center py-12 text-red-400 font-mono text-sm">Error al cargar el PDF.</div>`;
+        section.innerHTML = `<div class="rounded-3xl border border-gray-800 bg-gray-900 flex items-center justify-center py-12 text-red-400 font-mono text-sm">Error al cargar el PDF.</div>`;
     }
 }
 
@@ -183,14 +224,9 @@ function renderTocSection(section, toc) {
     lucide.createIcons();
 }
 
-const INDEX_SPINNER = `
-    <div class="flex items-center justify-center gap-2 text-gray-500 font-mono text-xs py-4">
-        <svg class="animate-spin" style="width:14px;height:14px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        Cargando índice...
-    </div>`;
+function indexSpinnerHTML(label) {
+    return loadingCardHTML({ label, labelId: "index-progress-label" });
+}
 
 async function toggleBookIndex(filePath) {
     const section = document.getElementById("book-index-section");
@@ -205,7 +241,7 @@ async function toggleBookIndex(filePath) {
 
     section.style.display = "";
     if (btn) { btn.innerHTML = '<i data-lucide="list-x" style="width:13px;height:13px;"></i> Cerrar'; lucide.createIcons(); }
-    section.innerHTML = INDEX_SPINNER;
+    section.innerHTML = indexSpinnerHTML("Cargando índice...");
 
     const book = BOOKS_CACHE[filePath];
     if (!book) return;
@@ -230,7 +266,7 @@ async function toggleBookIndex(filePath) {
     } catch (_) {}
 
     // 3 — Extract from PDF with page numbers (first time only)
-    section.innerHTML = INDEX_SPINNER.replace("Cargando índice...", "Extrayendo índice...");
+    section.innerHTML = indexSpinnerHTML("Extrayendo índice...");
 
     const { data: urlData, error } = await supabase.storage
         .from("dataleake").createSignedUrl(filePath, 3600);
@@ -385,22 +421,34 @@ function showBookPage(uuid) {
     }
 }
 
+// Cross-fade between home and detail via the View Transitions API (falls back to an instant swap).
+function withPageTransition(swap) {
+    if (document.startViewTransition) document.startViewTransition(swap);
+    else swap();
+}
+
 function renderBookPage(book) {
     const pageDetail = document.getElementById("page-detail");
     const pageMain   = document.getElementById("page-main");
     _currentFilePath = book.file_path;
     _pdfBlobUrl      = null;          // reset blob when changing books
-    pageDetail.innerHTML = htmlBookDetailPage(book);
-    pageMain.style.display   = "none";
-    pageDetail.style.display = "";
-    window.scrollTo(0, 0);
-    lucide.createIcons();
+
+    withPageTransition(() => {
+        pageDetail.innerHTML = htmlBookDetailPage(book);
+        pageMain.style.display   = "none";
+        pageDetail.style.display = "";
+        window.scrollTo(0, 0);
+        lucide.createIcons();
+    });
+
     trackEvent(book.id, "view");
 }
 
 function showMainPage() {
-    document.getElementById("page-main").style.display   = "";
-    document.getElementById("page-detail").style.display = "none";
+    withPageTransition(() => {
+        document.getElementById("page-main").style.display   = "";
+        document.getElementById("page-detail").style.display = "none";
+    });
 }
 
 function ensureMainVisible() {
@@ -502,23 +550,60 @@ async function getAllBooks() {
     return ALL_BOOKS;
 }
 
+// ── Index (TOC) search ────────────────────────────────────────────────────────
+
+function flattenTocTitles(toc) {
+    if (!toc || !Array.isArray(toc)) return [];
+    const titles = [];
+    for (const item of toc) {
+        if (item.title) titles.push(item.title);
+        if (item.items) titles.push(...flattenTocTitles(item.items));
+    }
+    return titles;
+}
+
+function wordsOf(text) {
+    return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length > 0);
+}
+
+var ALL_TOCS = null;
+
+async function getAllTocs() {
+    if (ALL_TOCS) return ALL_TOCS;
+    const { data } = await supabase.from("book_toc").select("book_id, toc");
+    ALL_TOCS = {};
+    for (const row of data || []) ALL_TOCS[row.book_id] = flattenTocTitles(row.toc);
+    return ALL_TOCS;
+}
+
+// Best fuzzy match of qWord against a list of words — returns a score, or -1 if nothing is close enough.
+function bestWordScore(words, qWord) {
+    if (words.length === 0) return -1;
+    const maxDist  = getTolerance(qWord.length);
+    const bestDist = Math.min(...words.map(w => levenshtein(qWord, w)));
+    return bestDist <= maxDist ? qWord.length - bestDist : -1;
+}
+
 async function searchBooks(query) {
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return [];
 
     const queryWords = trimmed.split(/\s+/).filter(w => w.length > 0);
-    const books = await getAllBooks();
+    const [books, tocs] = await Promise.all([getAllBooks(), getAllTocs()]);
 
     return books
         .map(book => {
-            const titleWords = book.title
-                .toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length > 0);
+            const titleWords = wordsOf(book.title);
+            const tocWords   = wordsOf((tocs[book.id] || []).join(" "));
+
             let totalScore = 0;
             for (const qWord of queryWords) {
-                const maxDist  = getTolerance(qWord.length);
-                const bestDist = Math.min(...titleWords.map(t => levenshtein(qWord, t)));
-                if (bestDist > maxDist) { totalScore = 0; break; }
-                totalScore += qWord.length - bestDist;
+                const titleScore = bestWordScore(titleWords, qWord);
+                const tocScore   = bestWordScore(tocWords, qWord);
+
+                if (titleScore < 0 && tocScore < 0) { totalScore = 0; break; }
+                // Title matches count fully; index matches count for less so titles still rank first
+                totalScore += Math.max(titleScore, 0) + Math.max(tocScore, 0) * 0.5;
             }
             return { ...book, _score: totalScore };
         })
