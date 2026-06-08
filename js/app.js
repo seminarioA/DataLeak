@@ -41,9 +41,9 @@ function loadingCardHTML({ label, labelId, ringId }) {
 
     if (ringId) {
         return `
-        <div id="${ringId}" class="rounded-3xl p-[3px] transition-[background] duration-150"
+        <div id="${ringId}" class="rounded-3xl p-[3px]"
              style="background: conic-gradient(#3b82f6 0%, #1f2937 0% 100%);">
-            <div class="rounded-[21px] bg-gray-900 flex flex-col items-center justify-center gap-3 py-16">
+            <div class="rounded-[21px] bg-gray-950 flex flex-col items-center justify-center gap-3 py-16">
                 ${inner}
             </div>
         </div>`;
@@ -55,17 +55,47 @@ function loadingCardHTML({ label, labelId, ringId }) {
     </div>`;
 }
 
+var _ringPct = 0;
+var _ringRaf = null;
+
 function pdfSpinnerHTML() {
+    _ringPct = 0;
+    if (_ringRaf) { cancelAnimationFrame(_ringRaf); _ringRaf = null; }
     return loadingCardHTML({ label: "Cargando PDF...", labelId: "pdf-progress-label", ringId: "pdf-progress-ring" });
+}
+
+function paintRing(ring, p) {
+    ring.style.background = `conic-gradient(#3b82f6 ${p}%, #1f2937 ${p}% 100%)`;
+}
+
+// Tweens the ring from its current value to the new one — registered CSS custom-property
+// transitions don't repaint conic-gradients reliably across browsers, so we animate by hand.
+function animateRingTo(ring, target) {
+    const start = _ringPct;
+    if (_ringRaf) cancelAnimationFrame(_ringRaf);
+    if (start === target) { paintRing(ring, target); return; }
+
+    const duration  = 350;
+    const startTime = performance.now();
+    const step = (now) => {
+        const t      = Math.min(1, (now - startTime) / duration);
+        const eased  = 1 - Math.pow(1 - t, 2);
+        const value  = start + (target - start) * eased;
+        paintRing(ring, value);
+        if (t < 1) {
+            _ringRaf = requestAnimationFrame(step);
+        } else {
+            _ringPct = target;
+            _ringRaf = null;
+        }
+    };
+    _ringRaf = requestAnimationFrame(step);
 }
 
 function setPdfProgress(pct) {
     const ring  = document.getElementById("pdf-progress-ring");
     const label = document.getElementById("pdf-progress-label");
-    if (ring) {
-        const p = pct == null ? 0 : pct;
-        ring.style.background = `conic-gradient(#3b82f6 ${p}%, #1f2937 ${p}% 100%)`;
-    }
+    if (ring) animateRingTo(ring, pct == null ? 0 : pct);
     if (label) label.textContent = pct != null ? `Cargando PDF... ${pct}%` : "Cargando PDF...";
 }
 
