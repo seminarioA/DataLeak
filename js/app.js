@@ -29,29 +29,43 @@ var _pdfBlobUrl     = null;
 var _currentFilePath = null;   // set when a detail page is rendered
 
 // Single shared spinner card — same border/bg as the surrounding info cards, reused by both the PDF and index loaders.
-function loadingCardHTML({ label, labelId, progressId }) {
-    return `
-    <div class="rounded-3xl border border-gray-800 bg-gray-900 flex flex-col items-center justify-center gap-3 py-16">
+// When `ringId` is set, the card's own border doubles as the progress bar: a conic-gradient
+// "fills" clockwise around the rounded frame as bytes come in, instead of a separate bar.
+function loadingCardHTML({ label, labelId, ringId }) {
+    const inner = `
         <svg class="animate-spin text-gray-400" style="width:32px;height:32px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <span id="${labelId}" class="text-gray-400 font-mono text-sm">${label}</span>
-        ${progressId ? `
-        <div class="w-48 h-1.5 rounded-full bg-gray-800 overflow-hidden">
-            <div id="${progressId}" class="h-full bg-blue-500 transition-all duration-150" style="width:0%"></div>
-        </div>` : ""}
+        <span id="${labelId}" class="text-gray-400 font-mono text-sm">${label}</span>`;
+
+    if (ringId) {
+        return `
+        <div id="${ringId}" class="rounded-3xl p-[3px] transition-[background] duration-150"
+             style="background: conic-gradient(#3b82f6 0%, #1f2937 0% 100%);">
+            <div class="rounded-[21px] bg-gray-900 flex flex-col items-center justify-center gap-3 py-16">
+                ${inner}
+            </div>
+        </div>`;
+    }
+
+    return `
+    <div class="rounded-3xl border border-gray-800 bg-gray-900 flex flex-col items-center justify-center gap-3 py-16">
+        ${inner}
     </div>`;
 }
 
 function pdfSpinnerHTML() {
-    return loadingCardHTML({ label: "Cargando PDF...", labelId: "pdf-progress-label", progressId: "pdf-progress-fill" });
+    return loadingCardHTML({ label: "Cargando PDF...", labelId: "pdf-progress-label", ringId: "pdf-progress-ring" });
 }
 
 function setPdfProgress(pct) {
-    const fill  = document.getElementById("pdf-progress-fill");
+    const ring  = document.getElementById("pdf-progress-ring");
     const label = document.getElementById("pdf-progress-label");
-    if (fill)  fill.style.width = pct + "%";
+    if (ring) {
+        const p = pct == null ? 0 : pct;
+        ring.style.background = `conic-gradient(#3b82f6 ${p}%, #1f2937 ${p}% 100%)`;
+    }
     if (label) label.textContent = pct != null ? `Cargando PDF... ${pct}%` : "Cargando PDF...";
 }
 
