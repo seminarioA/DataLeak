@@ -1,5 +1,16 @@
 function loadHeader() {
     document.getElementById("page-header").insertAdjacentHTML("beforeend", htmlHeaderComponent());
+    renderAuthArea();
+}
+
+function loadModals() {
+    const root = document.getElementById("modals-root");
+    root.insertAdjacentHTML("beforeend", htmlAuthModalComponent());
+    root.insertAdjacentHTML("beforeend", htmlBookRequestModalComponent());
+    root.insertAdjacentHTML("beforeend", htmlAdminUploadModalComponent());
+    initAuthModal();
+    initBookRequestModal();
+    initAdminUploadModal();
 }
 
 function loadNavbar() {
@@ -760,10 +771,16 @@ function initSearch() {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
-loadHeader();
-lucide.createIcons();
-loadNavbar();
-initDynamicCategories();
-loadFooter();
-initSearch();
-router();
+async function boot() {
+    await refreshAuthState();
+    loadHeader();
+    lucide.createIcons();
+    loadNavbar();
+    loadModals();
+    initDynamicCategories();
+    loadFooter();
+    initSearch();
+    router();
+}
+
+boot();
