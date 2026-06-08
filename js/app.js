@@ -26,7 +26,28 @@ async function downloadBook(filePath) {
 // ── PDF Viewer ────────────────────────────────────────────────────────────────
 
 var _pdfBlobUrl     = null;
+var _pdfBlob        = null;    // raw Blob, kept so the index can reuse it without re-downloading
 var _currentFilePath = null;   // set when a detail page is rendered
+
+// Same hex values as the Tailwind palette used for book covers/buttons (≈ "-500" shade),
+// so the loading ring matches each book's color instead of always being blue.
+const RING_COLORS = {
+    gray: "#6b7280", red: "#ef4444", blue: "#3b82f6", green: "#22c55e",
+    orange: "#f97316", amber: "#f59e0b", yellow: "#eab308", purple: "#a855f7",
+    teal: "#14b8a6", cyan: "#06b6d4", sky: "#0ea5e9",
+};
+
+function currentRingColor() {
+    const book = BOOKS_CACHE[_currentFilePath];
+    return RING_COLORS[book?.color] || RING_COLORS.blue;
+}
+
+// Blobs only live in memory — wiped automatically on tab close, never persisted to disk.
+window.addEventListener("pagehide", () => {
+    if (_pdfBlobUrl) URL.revokeObjectURL(_pdfBlobUrl);
+    _pdfBlobUrl = null;
+    _pdfBlob    = null;
+});
 
 // Single shared spinner card — same border/bg as the surrounding info cards, reused by both the PDF and index loaders.
 // When `ringId` is set, the card's own border doubles as the progress bar: a conic-gradient
@@ -42,7 +63,7 @@ function loadingCardHTML({ label, labelId, ringId }) {
     if (ringId) {
         return `
         <div id="${ringId}" class="rounded-3xl p-[3px]"
-             style="background: conic-gradient(#3b82f6 0%, #1f2937 0% 100%);">
+             style="background: conic-gradient(${currentRingColor()} 0%, #1f2937 0% 100%);">
             <div class="rounded-[21px] bg-gray-950 flex flex-col items-center justify-center gap-3 py-16">
                 ${inner}
             </div>
@@ -65,7 +86,7 @@ function pdfSpinnerHTML() {
 }
 
 function paintRing(ring, p) {
-    ring.style.background = `conic-gradient(#3b82f6 ${p}%, #1f2937 ${p}% 100%)`;
+    ring.style.background = `conic-gradient(${currentRingColor()} ${p}%, #1f2937 ${p}% 100%)`;
 }
 
 // Tweens the ring from its current value to the new one — registered CSS custom-property
@@ -131,7 +152,8 @@ async function togglePdfViewer(filePath) {
     if (!section) return;
 
     if (section.style.display !== "none") {
-        if (_pdfBlobUrl) { URL.revokeObjectURL(_pdfBlobUrl); _pdfBlobUrl = null; }
+        // Keep the blob cached (in memory only) — closing the viewer shouldn't force a re-download
+        // if the user opens the index or the viewer again for this same book.
         section.style.display = "none";
         section.innerHTML = "";
         if (btn) { btn.innerHTML = '<i data-lucide="eye" style="width:13px;height:13px;"></i> Ver PDF'; lucide.createIcons(); }
@@ -139,8 +161,18 @@ async function togglePdfViewer(filePath) {
     }
 
     section.style.display = "";
-    section.innerHTML = pdfSpinnerHTML();
     if (btn) { btn.innerHTML = '<i data-lucide="eye-off" style="width:13px;height:13px;"></i> Cerrar'; lucide.createIcons(); }
+
+    // Already downloaded for this book — reuse it, no spinner, no network round-trip
+    if (_pdfBlobUrl && _currentFilePath === filePath) {
+        section.innerHTML = `
+            <div class="rounded-3xl overflow-hidden border border-gray-800 shadow-xl">
+                <iframe src="${_pdfBlobUrl}#toolbar=1" style="width:100%;height:80vh;border:none;display:block;"></iframe>
+            </div>`;
+        return;
+    }
+
+    section.innerHTML = pdfSpinnerHTML();
 
     const { data, error } = await supabase.storage
         .from("dataleake")
@@ -153,6 +185,7 @@ async function togglePdfViewer(filePath) {
 
     try {
         const blob = await fetchBlobWithProgress(data.signedUrl, setPdfProgress);
+        _pdfBlob    = blob;
         _pdfBlobUrl = URL.createObjectURL(blob);
         section.innerHTML = `
             <div class="rounded-3xl overflow-hidden border border-gray-800 shadow-xl">
@@ -200,6 +233,7 @@ async function goToPdfPage(page) {
 
     try {
         const blob = await fetchBlobWithProgress(data.signedUrl, setPdfProgress);
+        _pdfBlob    = blob;
         _pdfBlobUrl = URL.createObjectURL(blob);
         mountIframe(_pdfBlobUrl, page);
     } catch (e) {
@@ -312,13 +346,19 @@ async function toggleBookIndex(filePath) {
     // 3 — Extract from PDF with page numbers (first time only)
     section.innerHTML = indexSpinnerHTML("Extrayendo índice...");
 
-    const { data: urlData, error } = await supabase.storage
-        .from("dataleake").createSignedUrl(filePath, 3600);
-    if (error || !urlData?.signedUrl) { section.innerHTML = ""; return; }
-
     try {
-        const pdf     = await pdfjsLib.getDocument({ url: urlData.signedUrl, rangeChunkSize: 65536, disableAutoFetch: true }).promise;
-        const raw     = await pdf.getOutline();
+        let pdf;
+        if (_pdfBlob && _currentFilePath === filePath) {
+            // Already downloaded via "Ver PDF" — reuse those bytes instead of fetching again
+            pdf = await pdfjsLib.getDocument({ data: await _pdfBlob.arrayBuffer() }).promise;
+        } else {
+            const { data: urlData, error } = await supabase.storage
+                .from("dataleake").createSignedUrl(filePath, 3600);
+            if (error || !urlData?.signedUrl) { section.innerHTML = ""; return; }
+            pdf = await pdfjsLib.getDocument({ url: urlData.signedUrl, rangeChunkSize: 65536, disableAutoFetch: true }).promise;
+        }
+
+        const raw = await pdf.getOutline();
 
         if (!raw || raw.length === 0) {
             section.innerHTML = `<p class="text-gray-600 font-mono text-xs text-center py-4">Este PDF no tiene índice de contenidos.</p>`;
@@ -474,8 +514,13 @@ function withPageTransition(swap) {
 function renderBookPage(book) {
     const pageDetail = document.getElementById("page-detail");
     const pageMain   = document.getElementById("page-main");
+    if (_currentFilePath !== book.file_path) {
+        // Different book — drop the cached PDF so the index/viewer fetch the new one
+        if (_pdfBlobUrl) URL.revokeObjectURL(_pdfBlobUrl);
+        _pdfBlobUrl = null;
+        _pdfBlob    = null;
+    }
     _currentFilePath = book.file_path;
-    _pdfBlobUrl      = null;          // reset blob when changing books
 
     withPageTransition(() => {
         pageDetail.innerHTML = htmlBookDetailPage(book);
