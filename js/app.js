@@ -76,12 +76,14 @@ function loadingCardHTML({ label, labelId, ringId }) {
     </div>`;
 }
 
-var _ringPct = 0;
-var _ringRaf = null;
+var _ringPct    = 0;
+var _ringTarget = 0;
+var _ringTimer  = null;
 
 function pdfSpinnerHTML() {
     _ringPct = 0;
-    if (_ringRaf) { cancelAnimationFrame(_ringRaf); _ringRaf = null; }
+    _ringTarget = 0;
+    if (_ringTimer) { clearTimeout(_ringTimer); _ringTimer = null; }
     return loadingCardHTML({ label: "Cargando PDF...", labelId: "pdf-progress-label", ringId: "pdf-progress-ring" });
 }
 
@@ -89,28 +91,28 @@ function paintRing(ring, p) {
     ring.style.background = `conic-gradient(${currentRingColor()} ${p}%, #1f2937 ${p}% 100%)`;
 }
 
-// Tweens the ring from its current value to the new one — registered CSS custom-property
-// transitions don't repaint conic-gradients reliably across browsers, so we animate by hand.
-function animateRingTo(ring, target) {
-    const start = _ringPct;
-    if (_ringRaf) cancelAnimationFrame(_ringRaf);
-    if (start === target) { paintRing(ring, target); return; }
+// A single persistent loop that eases _ringPct toward _ringTarget, repainting each tick.
+// Retargeting (animateRingTo) only updates _ringTarget — it never cancels/restarts the loop,
+// so bursts of fast progress events (which used to cancel the tween before it could move,
+// freezing the ring near 0%) just shift where the loop is heading. Driven by setTimeout
+// rather than requestAnimationFrame, since rAF is fully suspended on hidden/background tabs
+// (never fires) — setTimeout keeps advancing (just less often there) so it never gets stuck.
+function ringLoop(ring) {
+    const diff = _ringTarget - _ringPct;
+    if (Math.abs(diff) < 0.15) {
+        _ringPct = _ringTarget;
+        paintRing(ring, _ringPct);
+        _ringTimer = null;
+        return;
+    }
+    _ringPct += diff * 0.2;
+    paintRing(ring, _ringPct);
+    _ringTimer = setTimeout(() => ringLoop(ring), 16);
+}
 
-    const duration  = 350;
-    const startTime = performance.now();
-    const step = (now) => {
-        const t      = Math.min(1, (now - startTime) / duration);
-        const eased  = 1 - Math.pow(1 - t, 2);
-        const value  = start + (target - start) * eased;
-        paintRing(ring, value);
-        if (t < 1) {
-            _ringRaf = requestAnimationFrame(step);
-        } else {
-            _ringPct = target;
-            _ringRaf = null;
-        }
-    };
-    _ringRaf = requestAnimationFrame(step);
+function animateRingTo(ring, target) {
+    _ringTarget = target;
+    if (!_ringTimer) _ringTimer = setTimeout(() => ringLoop(ring), 16);
 }
 
 function setPdfProgress(pct) {
